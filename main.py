@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="SARA", version="1.0", lifespan=lifespan)
+app = FastAPI(title="ARGUS", version="1.1", lifespan=lifespan)
 
 
 # --- Models ---
@@ -133,7 +133,7 @@ async def scan_export_pdf(
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=sara_{scan_id}.pdf"},
+        headers={"Content-Disposition": f"attachment; filename=argus_{scan_id}.pdf"},
     )
 
 
@@ -156,7 +156,7 @@ async def scan_export_csv(
     return Response(
         content=csv_str,
         media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=sara_{scan_id}.csv"},
+        headers={"Content-Disposition": f"attachment; filename=argus_{scan_id}.csv"},
     )
 
 
