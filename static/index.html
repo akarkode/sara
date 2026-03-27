@@ -32,12 +32,12 @@
   --cyan:      #22d3ee;  --cyan-lo:   rgba(34,211,238,0.10);
   --font: 'Geist', -apple-system, sans-serif;
   --mono: 'Geist Mono', 'Consolas', monospace;
-  --r: 12px;  --r-sm: 8px;
+  --r: 12px; --r-sm: 8px;
   --shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
 
 ::selection { background: rgba(79,142,247,0.25); }
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 4px; }
 
@@ -49,7 +49,6 @@ html, body {
   line-height: 1.5;
 }
 
-/* ambient */
 body::after {
   content: '';
   position: fixed;
@@ -69,7 +68,6 @@ body::after {
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
 }
-
 .logo { display: flex; align-items: center; gap: 14px; }
 .logo-mark {
   width: 32px; height: 32px; border-radius: 9px;
@@ -86,17 +84,18 @@ body::after {
 /* ─── Page ─── */
 .page {
   position: relative; z-index: 1;
-  max-width: 860px;
+  max-width: 1080px;
   margin: 0 auto;
   padding: 52px 32px 72px;
   display: flex; flex-direction: column; gap: 28px;
 }
 
-/* ─── Section label ─── */
 .sec-label {
   font-size: 10px; font-weight: 600; letter-spacing: 2px;
   color: var(--txt-3); text-transform: uppercase; margin-bottom: 10px;
 }
+.bar-div { width: 1px; height: 18px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+.flex1 { flex: 1; }
 
 /* ─── Target ─── */
 .target-wrap { position: relative; }
@@ -133,8 +132,6 @@ body::after {
 
 /* ─── Config row ─── */
 .cfg-row { display: flex; gap: 12px; align-items: flex-start; }
-
-/* ─── Tools dropdown ─── */
 .tools-drop { position: relative; flex: 1; }
 .tools-trigger {
   width: 100%; height: 46px;
@@ -150,10 +147,7 @@ body::after {
 .trig-l { display: flex; align-items: center; gap: 10px; }
 .trig-icon { font-size: 14px; }
 .trig-lbl { font-size: 13px; font-weight: 500; color: var(--txt); }
-.trig-cnt {
-  font-size: 10px; font-weight: 600; padding: 2px 9px; border-radius: 20px;
-  background: var(--accent-lo); color: var(--accent); font-family: var(--mono);
-}
+.trig-cnt { font-size: 10px; font-weight: 600; padding: 2px 9px; border-radius: 20px; background: var(--accent-lo); color: var(--accent); font-family: var(--mono); }
 .trig-chev { font-size: 9px; color: var(--txt-3); transition: transform 200ms; }
 .tools-trigger.open .trig-chev { transform: rotate(180deg); }
 
@@ -181,9 +175,7 @@ body::after {
 }
 .pa-btn:hover { color: var(--txt); border-color: var(--border-hi); }
 
-.tools-grid {
-  display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; padding: 14px;
-}
+.tools-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; padding: 14px; }
 .tool-item {
   display: flex; align-items: center; gap: 10px;
   padding: 11px 13px; border: 1px solid var(--border);
@@ -222,87 +214,299 @@ body::after {
 .el-dot.live { background: var(--green); animation: pulse 1.5s ease infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(1.45)} }
 
-/* ─── Output ─── */
-.output-card {
+/* ─── Progress Section ─── */
+.progress-section {
   background: var(--surface); border: 1px solid var(--border-md);
-  border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow);
-  display: flex; flex-direction: column;
+  border-radius: var(--r); padding: 20px 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
 }
+.progress-section .sec-label { margin-bottom: 16px; }
 
-.out-bar {
-  display: flex; align-items: center; gap: 10px;
-  padding: 11px 18px; border-bottom: 1px solid var(--border);
-  background: var(--elevated); flex-wrap: wrap; row-gap: 8px;
+.pipeline {
+  display: flex; align-items: center; gap: 0; overflow-x: auto;
+  padding-bottom: 4px;
 }
-.tlights { display: flex; gap: 6px; }
-.tl { width: 11px; height: 11px; border-radius: 50%; }
-.tl-r{background:#ff5f57} .tl-y{background:#ffbd2e} .tl-g{background:#28ca41}
-.out-ttl { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; color: var(--txt-2); text-transform: uppercase; }
-.out-info { font-family: var(--mono); font-size: 11px; color: var(--txt-3); }
-.flex1 { flex: 1; }
-
-/* filter pills */
-.f-pills { display: flex; gap: 3px; }
-.f-pill {
-  padding: 4px 12px; border-radius: 20px; border: 1px solid transparent;
-  background: transparent; font-size: 11px; font-weight: 600;
-  cursor: pointer; font-family: var(--mono); color: var(--txt-3); transition: all 120ms;
+.pipe-step {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; min-width: 84px; padding: 0 8px; position: relative;
+  flex-shrink: 0;
 }
-.f-pill:hover { color: var(--txt-2); border-color: var(--border-md); }
-.f-pill.on[data-f="all"] { background: rgba(255,255,255,0.07); color: var(--txt); border-color: var(--border-md); }
-.f-pill.on[data-f="2xx"] { background: var(--green-lo); color: var(--green); border-color: rgba(52,211,153,0.3); }
-.f-pill.on[data-f="3xx"] { background: var(--blue-lo); color: var(--blue); border-color: rgba(96,165,250,0.3); }
-.f-pill.on[data-f="4xx"] { background: var(--orange-lo); color: var(--orange); border-color: rgba(251,146,60,0.3); }
-.f-pill.on[data-f="5xx"] { background: var(--red-lo); color: var(--red); border-color: rgba(248,113,113,0.3); }
+.pipe-step:not(:first-child)::before {
+  content: '';
+  position: absolute; left: 0; top: 16px;
+  width: 1px; height: 1px;
+  border-top: 1px dashed var(--border-hi);
+  width: 100%;
+  transform: translateX(-50%);
+  z-index: 0;
+}
+.pipe-connector {
+  flex: 1; height: 1px; border-top: 1px dashed var(--border-hi);
+  min-width: 12px; flex-shrink: 1;
+}
+.pipe-icon {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; z-index: 1;
+  background: var(--elevated); border: 1.5px solid var(--border-md);
+  color: var(--txt-3); transition: all 200ms;
+}
+.pipe-step[data-state="pending"] .pipe-icon { background: var(--elevated); border-color: var(--border-md); color: var(--txt-3); }
+.pipe-step[data-state="running"] .pipe-icon { background: var(--accent-lo); border-color: var(--accent); color: var(--accent); }
+.pipe-step[data-state="done"] .pipe-icon { background: var(--green-lo); border-color: var(--green); color: var(--green); }
+.pipe-step[data-state="skipped"] .pipe-icon { background: var(--elevated); border-color: var(--border); color: var(--txt-3); }
+.pipe-step[data-state="error"] .pipe-icon { background: var(--red-lo); border-color: var(--red); color: var(--red); }
+.pipe-spinner {
+  width: 14px; height: 14px; border: 2px solid var(--accent-md);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .65s linear infinite;
+}
+.pipe-name { font-size: 10px; font-weight: 600; letter-spacing: 1px; color: var(--txt-2); text-transform: uppercase; }
+.pipe-count { font-size: 10px; font-family: var(--mono); color: var(--txt-3); min-height: 14px; }
 
-.bar-div { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
+/* ─── Stats Bar ─── */
+.stats-bar {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px;
+  padding-top: 16px; border-top: 1px solid var(--border);
+}
+.stat-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border-md);
+  background: var(--elevated); font-size: 12px;
+}
+.stat-chip.subdomain { border-color: rgba(34,211,238,0.25); }
+.stat-chip.livehost  { border-color: rgba(52,211,153,0.25); }
+.stat-chip.port      { border-color: rgba(248,113,113,0.25); }
+.stat-chip.waf       { border-color: rgba(251,146,60,0.25); }
+.stat-chip.tech      { border-color: rgba(192,132,252,0.25); }
+.stat-val { font-family: var(--mono); font-weight: 600; font-size: 14px; }
+.stat-chip.subdomain .stat-val { color: var(--cyan); }
+.stat-chip.livehost  .stat-val { color: var(--green); }
+.stat-chip.port      .stat-val { color: var(--red); }
+.stat-chip.waf       .stat-val { color: var(--orange); }
+.stat-chip.tech      .stat-val { color: var(--purple); }
+.stat-label { color: var(--txt-2); font-size: 11px; }
 
-/* export */
-.exp-grp { display: flex; align-items: center; gap: 5px; }
-.exp-chip { font-size: 10px; padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--txt-3); cursor: pointer; font-family: var(--mono); transition: all 80ms; }
-.exp-chip.on { border-color: currentColor; }
-.exp-chip[data-sc="2xx"].on{color:var(--green)} .exp-chip[data-sc="3xx"].on{color:var(--blue)} .exp-chip[data-sc="4xx"].on{color:var(--orange)} .exp-chip[data-sc="5xx"].on{color:var(--red)}
-.exp-btn { padding: 5px 13px; border: 1px solid var(--border-md); border-radius: 6px; background: transparent; color: var(--txt-2); font-size: 11px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: all 120ms; }
+/* ─── Results Section ─── */
+.results-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.results-header .sec-label { margin: 0; }
+.global-export { display: flex; align-items: center; gap: 6px; }
+.exp-btn {
+  padding: 5px 13px; border: 1px solid var(--border-md); border-radius: 6px;
+  background: transparent; color: var(--txt-2); font-size: 11px; font-weight: 600;
+  cursor: pointer; font-family: var(--font); transition: all 120ms;
+}
 .exp-btn:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
 .exp-btn:disabled { opacity: 0.28; cursor: not-allowed; }
-.copy-btn { padding: 5px 12px; border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--txt-3); font-size: 11px; cursor: pointer; font-family: var(--font); transition: all 120ms; }
-.copy-btn:hover { color: var(--txt); border-color: var(--border-md); }
 
-/* progress */
-.prog { height: 1px; background: var(--border); flex-shrink: 0; }
-.prog-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #818cf8); transition: width 400ms ease; }
-
-/* status sub */
-.status-sub { display: none; align-items: center; gap: 10px; padding: 9px 18px; border-bottom: 1px solid var(--border); font-size: 11px; }
-.status-sub.show { display: flex; }
-.run-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s ease infinite; }
-.step-txt { font-family: var(--mono); color: var(--txt-2); }
-.gap1 { flex: 1; }
-.live-txt { font-family: var(--mono); font-size: 10px; color: var(--txt-3); }
-
-/* terminal */
-.terminal {
-  min-height: 360px; max-height: 480px; overflow-y: auto;
-  padding: 18px 20px; font-family: var(--mono); font-size: 12px; line-height: 1.9;
-  background: var(--bg); position: relative;
+/* ─── Result Panel ─── */
+.result-panel {
+  background: var(--surface); border: 1px solid var(--border-md);
+  border-radius: var(--r); overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  margin-bottom: 12px;
+  transition: border-color 200ms;
 }
-.term-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--txt-3); }
-.term-glyph { font-size: 22px; letter-spacing: -1px; opacity: 0.15; }
-.term-txt { font-size: 12px; }
-.cursor::after { content: '▊'; animation: blink 1s step-end infinite; opacity: 0.4; font-size: 10px; }
-@keyframes blink { 0%,100%{opacity:.4} 50%{opacity:0} }
+.result-panel.active { border-color: var(--accent-md); }
 
-.line { display: flex; gap: 10px; align-items: baseline; padding: 0.5px 0; animation: li 60ms ease; }
-.line.hide { display: none; }
-@keyframes li { from{opacity:0;transform:translateX(-3px)} to{opacity:1;transform:none} }
-.l-ts { color: var(--txt-3); font-size: 10px; white-space: nowrap; min-width: 64px; }
-.l-tool { font-size: 9px; font-weight: 600; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; white-space: nowrap; letter-spacing: 0.5px; }
-.t-httpx{background:var(--green-lo);color:var(--green)} .t-subfinder{background:var(--blue-lo);color:var(--blue)} .t-ffuf{background:var(--yellow-lo);color:var(--yellow)} .t-whatweb{background:var(--purple-lo);color:var(--purple)} .t-wafw00f{background:var(--orange-lo);color:var(--orange)} .t-nmap{background:var(--red-lo);color:var(--red)} .t-whois,.t-dig{background:var(--cyan-lo);color:var(--cyan)} .t-system{background:rgba(255,255,255,0.04);color:var(--txt-3)}
-.l-sc { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
-.sc-2{color:var(--green);background:var(--green-lo)} .sc-3{color:var(--blue);background:var(--blue-lo)} .sc-4{color:var(--orange);background:var(--orange-lo)} .sc-5{color:var(--red);background:var(--red-lo)}
-.l-msg { color: var(--txt); word-break: break-all; }
-.resume-btn { position: sticky; bottom: 8px; float: right; padding: 5px 13px; border: 1px solid var(--border-md); border-radius: 7px; background: var(--elevated); color: var(--txt-2); font-size: 11px; cursor: pointer; display: none; font-family: var(--font); }
-.resume-btn.show { display: block; }
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; cursor: pointer; user-select: none;
+  background: var(--elevated); gap: 12px;
+  transition: background 150ms;
+}
+.panel-header:hover { background: rgba(255,255,255,0.03); }
+.ph-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.ph-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.panel-tool-badge {
+  font-size: 9px; font-weight: 700; padding: 3px 8px;
+  border-radius: 5px; text-transform: uppercase; letter-spacing: 1px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.t-httpx   { background: var(--green-lo);  color: var(--green); }
+.t-nmap    { background: var(--red-lo);    color: var(--red); }
+.t-dig     { background: var(--cyan-lo);   color: var(--cyan); }
+.t-whois   { background: var(--cyan-lo);   color: var(--cyan); }
+.t-wafw00f { background: var(--orange-lo); color: var(--orange); }
+.t-whatweb { background: var(--purple-lo); color: var(--purple); }
+.t-ffuf    { background: var(--yellow-lo); color: var(--yellow); }
+
+.panel-title { font-size: 13px; font-weight: 500; color: var(--txt); }
+.panel-count {
+  font-size: 11px; font-family: var(--mono); font-weight: 600;
+  padding: 2px 8px; border-radius: 20px;
+  background: var(--accent-lo); color: var(--accent);
+}
+
+.panel-search {
+  height: 30px; padding: 0 10px; width: 180px;
+  background: var(--bg); border: 1px solid var(--border-md);
+  border-radius: 6px; font-size: 11px; font-family: var(--mono);
+  color: var(--txt); outline: none; transition: border-color 150ms;
+}
+.panel-search:focus { border-color: var(--accent); }
+.panel-search::placeholder { color: var(--txt-3); }
+
+.panel-csv-btn {
+  padding: 4px 11px; border: 1px solid var(--border-md); border-radius: 6px;
+  background: transparent; color: var(--txt-2); font-size: 11px; font-weight: 600;
+  cursor: pointer; font-family: var(--font); transition: all 120ms; white-space: nowrap;
+}
+.panel-csv-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.panel-chevron {
+  font-size: 10px; color: var(--txt-3);
+  transition: transform 200ms; flex-shrink: 0;
+}
+.result-panel.collapsed .panel-chevron { transform: rotate(-90deg); }
+
+.panel-body {
+  overflow: hidden;
+  max-height: 520px;
+  overflow-y: auto;
+  transition: max-height 250ms ease;
+}
+.result-panel.collapsed .panel-body {
+  max-height: 0;
+  overflow: hidden;
+}
+
+.panel-empty {
+  padding: 32px; text-align: center;
+  color: var(--txt-3); font-size: 12px; font-family: var(--mono);
+}
+
+/* ─── Data Table (shared) ─── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  padding: 9px 16px; color: var(--txt-3); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1px; text-align: left;
+  border-bottom: 1px solid var(--border); background: var(--bg);
+  white-space: nowrap; position: sticky; top: 0; z-index: 2;
+}
+.data-table th.sortable { cursor: pointer; }
+.data-table th.sortable:hover { color: var(--txt-2); }
+.data-table th.sort-asc::after  { content: ' ↑'; }
+.data-table th.sort-desc::after { content: ' ↓'; }
+.data-table td {
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  font-size: 12px; vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+.data-table tr.filtered { display: none; }
+.mono { font-family: var(--mono); }
+.version { font-size: 11px; color: var(--txt-2); }
+
+/* ─── Clickable links ─── */
+.mono-link {
+  font-family: var(--mono); color: var(--accent);
+  text-decoration: none; font-size: 12px;
+  word-break: break-all;
+}
+.mono-link:hover { text-decoration: underline; color: #7fb3ff; }
+
+/* ─── Status code badges ─── */
+.sc-badge {
+  display: inline-block; padding: 2px 7px; border-radius: 5px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  white-space: nowrap;
+}
+.sc-badge.s2xx { background: var(--green-lo);  color: var(--green); }
+.sc-badge.s3xx { background: var(--blue-lo);   color: var(--blue); }
+.sc-badge.s4xx { background: var(--yellow-lo); color: var(--yellow); }
+.sc-badge.s5xx { background: var(--red-lo);    color: var(--red); }
+.sc-badge.s0   { background: rgba(255,255,255,0.04); color: var(--txt-3); }
+
+/* ─── State badges (nmap) ─── */
+.state-badge {
+  display: inline-block; padding: 2px 7px; border-radius: 5px;
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+}
+.state-open     { background: var(--green-lo);  color: var(--green); }
+.state-closed   { background: var(--red-lo);    color: var(--red); }
+.state-filtered { background: rgba(255,255,255,0.04); color: var(--txt-3); }
+
+/* ─── Tech chips ─── */
+.tech-chip {
+  display: inline-block; padding: 2px 8px; border-radius: 20px;
+  font-size: 10px; background: var(--elevated); border: 1px solid var(--border-md);
+  color: var(--txt-2); margin: 2px 2px 2px 0;
+  font-family: var(--mono);
+}
+.tech-cell { min-width: 140px; }
+
+/* ─── WHOIS Card ─── */
+.whois-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 1px; background: var(--border); margin: 1px;
+}
+.whois-cell {
+  background: var(--surface); padding: 14px 18px;
+}
+.whois-cell--full { grid-column: 1 / -1; }
+.whois-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
+  color: var(--txt-3); text-transform: uppercase; margin-bottom: 4px;
+}
+.whois-value { font-size: 13px; font-family: var(--mono); color: var(--txt); }
+.whois-ns-item {
+  font-size: 12px; font-family: var(--mono); color: var(--txt);
+  padding: 2px 0;
+}
+
+/* ─── DNS Records ─── */
+.dns-container { padding: 4px 0; }
+.dns-section { margin-bottom: 4px; }
+.dns-type-header {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px;
+  color: var(--cyan); text-transform: uppercase;
+  padding: 8px 16px; background: rgba(34,211,238,0.05);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ─── WAF Cards ─── */
+.waf-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1px; background: var(--border); margin: 1px;
+}
+.waf-card {
+  background: var(--surface); padding: 14px 16px;
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.waf-status-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+}
+.waf-on  { background: var(--red);   box-shadow: 0 0 8px rgba(248,113,113,0.5); }
+.waf-off { background: var(--green); box-shadow: 0 0 8px rgba(52,211,153,0.5); }
+.waf-info { min-width: 0; }
+.waf-url {
+  font-family: var(--mono); font-size: 12px; color: var(--txt);
+  word-break: break-all; margin-bottom: 4px;
+}
+.waf-name { font-weight: 600; color: var(--red); }
+.waf-none { color: var(--green); font-size: 12px; }
+.waf-vendor { font-size: 11px; color: var(--txt-3); }
+
+/* ─── FFUF host header ─── */
+.ffuf-host-header {
+  padding: 8px 16px; background: var(--elevated);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; color: var(--txt-2);
+  display: flex; align-items: center; gap: 8px;
+}
+.ffuf-host-header .fuzz-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px;
+  color: var(--yellow); text-transform: uppercase;
+  background: var(--yellow-lo); padding: 2px 7px; border-radius: 4px;
+}
+.ffuf-host-header .fuzz-target {
+  font-family: var(--mono); color: var(--txt);
+}
 
 /* ─── History ─── */
 .hist-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; padding: 4px 0; }
@@ -354,7 +558,7 @@ body::after {
     <div class="sec-label">Configuration</div>
     <div class="cfg-row">
       <div class="tools-drop" id="toolsDrop">
-        <div class="tools-trigger" id="toolsTrigger" onclick="togglePanel()">
+        <div class="tools-trigger" id="toolsTrigger" onclick="toggleDropdown()">
           <div class="trig-l">
             <span class="trig-icon">⚙</span>
             <span class="trig-lbl">Recon Tools</span>
@@ -362,7 +566,6 @@ body::after {
           </div>
           <span class="trig-chev">▼</span>
         </div>
-
         <div class="tools-panel" id="toolsPanel">
           <div class="panel-hdr">
             <span class="panel-ttl">Select Tools</span>
@@ -382,7 +585,6 @@ body::after {
           </div>
         </div>
       </div>
-
       <div class="elapsed-box">
         <div class="el-dot" id="elDot"></div>
         <span id="elTime">00:00</span>
@@ -390,56 +592,25 @@ body::after {
     </div>
   </div>
 
-  <!-- Output -->
-  <div>
-    <div class="sec-label">Output</div>
-    <div class="output-card">
-
-      <div class="out-bar">
-        <div class="tlights"><div class="tl tl-r"></div><div class="tl tl-y"></div><div class="tl tl-g"></div></div>
-        <span class="out-ttl">Terminal</span>
-        <span class="out-info" id="outInfo"></span>
-        <div class="flex1"></div>
-        <div class="f-pills">
-          <button class="f-pill on" data-f="all" onclick="setFilter('all',this)">ALL</button>
-          <button class="f-pill" data-f="2xx" onclick="setFilter('2xx',this)">2xx</button>
-          <button class="f-pill" data-f="3xx" onclick="setFilter('3xx',this)">3xx</button>
-          <button class="f-pill" data-f="4xx" onclick="setFilter('4xx',this)">4xx</button>
-          <button class="f-pill" data-f="5xx" onclick="setFilter('5xx',this)">5xx</button>
-        </div>
-        <div class="bar-div"></div>
-        <div class="exp-grp">
-          <div id="expFilters" style="display:flex;gap:3px">
-            <button class="exp-chip on" data-sc="2xx" onclick="this.classList.toggle('on')">2xx</button>
-            <button class="exp-chip on" data-sc="3xx" onclick="this.classList.toggle('on')">3xx</button>
-            <button class="exp-chip on" data-sc="4xx" onclick="this.classList.toggle('on')">4xx</button>
-            <button class="exp-chip on" data-sc="5xx" onclick="this.classList.toggle('on')">5xx</button>
-          </div>
-          <button class="exp-btn" id="expPdf" onclick="doExport('pdf')" disabled>PDF</button>
-          <button class="exp-btn" id="expCsv" onclick="doExport('csv')" disabled>CSV</button>
-        </div>
-        <div class="bar-div"></div>
-        <button class="copy-btn" onclick="copyOutput()">Copy</button>
-      </div>
-
-      <div class="prog"><div class="prog-fill" id="progFill"></div></div>
-
-      <div class="status-sub" id="statusSub">
-        <div class="run-dot"></div>
-        <span class="step-txt" id="stepTxt">Initializing…</span>
-        <div class="gap1"></div>
-        <span class="live-txt" id="liveTxt"></span>
-      </div>
-
-      <div class="terminal" id="terminal">
-        <div class="term-empty" id="termEmpty">
-          <div class="term-glyph">▸▹▹▹▹</div>
-          <div class="term-txt"><span class="cursor">Awaiting target</span></div>
-        </div>
-        <button class="resume-btn" id="resumeBtn" onclick="resumeScroll()">↓ Resume</button>
-      </div>
-
+  <!-- Scan Progress -->
+  <div id="progressSection" style="display:none">
+    <div class="progress-section">
+      <div class="sec-label">Scan Progress</div>
+      <div class="pipeline" id="pipeline"></div>
+      <div class="stats-bar" id="statsBar"></div>
     </div>
+  </div>
+
+  <!-- Results -->
+  <div id="resultsSection" style="display:none">
+    <div class="results-header">
+      <div class="sec-label" style="margin:0">Results</div>
+      <div class="global-export">
+        <button class="exp-btn" id="expPdf" onclick="doExport('pdf')" disabled>PDF Report</button>
+        <button class="exp-btn" id="expCsv" onclick="doExport('csv')" disabled>Full CSV</button>
+      </div>
+    </div>
+    <div id="resultPanels"></div>
   </div>
 
   <!-- History -->
@@ -462,201 +633,786 @@ body::after {
 </div>
 
 <script>
-let scanning=false, autoScroll=true, currentScanId=null, eventSource=null;
-let timerInterval=null, timerStart=0;
-let selectedTools=new Set(), toolsMeta={};
-let currentFilter='all', wordlistMode='default';
-let seenSC=new Set(), lineCount=0, resultCount=0, panelOpen=false;
-const $=id=>document.getElementById(id);
+// ─── State ────────────────────────────────────────────────────────────────────
+const STATE = {
+  scanning: false,
+  scanId: null,
+  domain: null,
+  timerStart: 0,
+  timerInterval: null,
+  eventSource: null,
+  selectedTools: new Set(),
+  toolsMeta: {},
+  wordlistMode: 'default',
+  panelOpen: false,
+  store: {},
+  pipeline: {},
+  stats: { subdomains: 0, liveHosts: 0, openPorts: 0, wafsDetected: 0, techs: new Set() },
+  ffufHosts: new Set(),
+};
 
-loadTools(); loadHistory();
+const TOOL_INFO = {
+  httpx:   { label: 'HTTP Probing', desc: 'Subdomains &amp; HTTP probe' },
+  nmap:    { label: 'Port Scan',    desc: 'Open ports &amp; services' },
+  dig:     { label: 'DNS Records',  desc: 'A, MX, NS, TXT, CNAME' },
+  whois:   { label: 'WHOIS',        desc: 'Domain registration info' },
+  wafw00f: { label: 'WAF Detect',   desc: 'Firewall detection' },
+  whatweb: { label: 'Tech Fingerprint', desc: 'CMS, frameworks, stack' },
+  ffuf:    { label: 'Dir Fuzz',     desc: 'Hidden paths &amp; endpoints' },
+};
 
-async function loadTools(){
-  try{
-    const r=await fetch('/tools'), d=await r.json();
-    toolsMeta=d.tools;
-    const defs=d.defaults||[], grid=$('toolsGrid');
-    grid.innerHTML='';
-    Object.entries(toolsMeta).sort((a,b)=>a[1].order-b[1].order).forEach(([id,info])=>{
-      if(defs.includes(id)) selectedTools.add(id);
-      const el=document.createElement('div');
-      el.className='tool-item'+(defs.includes(id)?' on':'');
-      el.dataset.tool=id;
-      el.onclick=()=>{if(!scanning)toggleTool(id,el)};
-      el.innerHTML=`<div class="tool-pip"></div><div><div class="tool-n">${esc(info.name||id)}</div><div class="tool-d">${esc(info.description||'')}</div></div>`;
-      grid.appendChild(el);
-    });
+// ─── DOM helpers ─────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+function esc(s) {
+  if (s == null) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+function statusClass(sc) {
+  sc = +sc;
+  if (sc >= 200 && sc < 300) return 's2xx';
+  if (sc >= 300 && sc < 400) return 's3xx';
+  if (sc >= 400 && sc < 500) return 's4xx';
+  if (sc >= 500)             return 's5xx';
+  return 's0';
+}
+function safeUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    return u.href;
+  } catch { return null; }
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+loadTools();
+loadHistory();
+
+// ─── Tools Dropdown ───────────────────────────────────────────────────────────
+async function loadTools() {
+  try {
+    const r = await fetch('/tools'), d = await r.json();
+    STATE.toolsMeta = d.tools;
+    const defs = d.defaults || [], grid = $('toolsGrid');
+    grid.innerHTML = '';
+    Object.entries(STATE.toolsMeta)
+      .sort((a, b) => a[1].order - b[1].order)
+      .forEach(([id, info]) => {
+        if (defs.includes(id)) STATE.selectedTools.add(id);
+        const el = document.createElement('div');
+        el.className = 'tool-item' + (defs.includes(id) ? ' on' : '');
+        el.dataset.tool = id;
+        el.onclick = () => { if (!STATE.scanning) toggleTool(id, el); };
+        el.innerHTML = `<div class="tool-pip"></div><div><div class="tool-n">${esc(info.name || id)}</div><div class="tool-d">${esc(info.description || '')}</div></div>`;
+        grid.appendChild(el);
+      });
     updateCount();
-  }catch(e){console.error(e)}
+  } catch (e) { console.error(e); }
 }
-function toggleTool(id,el){selectedTools.has(id)?(selectedTools.delete(id),el.classList.remove('on')):(selectedTools.add(id),el.classList.add('on'));updateCount();}
-function selectAll(){document.querySelectorAll('.tool-item').forEach(el=>{selectedTools.add(el.dataset.tool);el.classList.add('on')});updateCount();}
-function selectNone(){document.querySelectorAll('.tool-item').forEach(el=>{selectedTools.delete(el.dataset.tool);el.classList.remove('on')});updateCount();}
-function updateCount(){$('toolsCount').textContent=selectedTools.size;}
 
-function togglePanel(){
-  panelOpen=!panelOpen;
-  $('toolsPanel').classList.toggle('open',panelOpen);
-  $('toolsTrigger').classList.toggle('open',panelOpen);
+function toggleTool(id, el) {
+  STATE.selectedTools.has(id)
+    ? (STATE.selectedTools.delete(id), el.classList.remove('on'))
+    : (STATE.selectedTools.add(id), el.classList.add('on'));
+  updateCount();
 }
-document.addEventListener('click',e=>{
-  if(panelOpen&&!$('toolsDrop').contains(e.target)){
-    panelOpen=false;$('toolsPanel').classList.remove('open');$('toolsTrigger').classList.remove('open');
+function selectAll() {
+  document.querySelectorAll('.tool-item').forEach(el => { STATE.selectedTools.add(el.dataset.tool); el.classList.add('on'); });
+  updateCount();
+}
+function selectNone() {
+  document.querySelectorAll('.tool-item').forEach(el => { STATE.selectedTools.delete(el.dataset.tool); el.classList.remove('on'); });
+  updateCount();
+}
+function updateCount() { $('toolsCount').textContent = STATE.selectedTools.size; }
+
+function toggleDropdown() {
+  STATE.panelOpen = !STATE.panelOpen;
+  $('toolsPanel').classList.toggle('open', STATE.panelOpen);
+  $('toolsTrigger').classList.toggle('open', STATE.panelOpen);
+}
+document.addEventListener('click', e => {
+  if (STATE.panelOpen && !$('toolsDrop').contains(e.target)) {
+    STATE.panelOpen = false;
+    $('toolsPanel').classList.remove('open');
+    $('toolsTrigger').classList.remove('open');
   }
 });
-
-function setWl(m){
-  wordlistMode=m;
-  $('wlDef').classList.toggle('on',m==='default');
-  $('wlCust').classList.toggle('on',m==='custom');
-  $('wlPath').classList.toggle('show',m==='custom');
+function setWl(m) {
+  STATE.wordlistMode = m;
+  $('wlDef').classList.toggle('on', m === 'default');
+  $('wlCust').classList.toggle('on', m === 'custom');
+  $('wlPath').classList.toggle('show', m === 'custom');
 }
 
-$('domainInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!scanning)startScan();});
-$('terminal').addEventListener('scroll',()=>{
-  const t=$('terminal');
-  autoScroll=t.scrollHeight-t.scrollTop-t.clientHeight<40;
-  $('resumeBtn').classList.toggle('show',!autoScroll&&scanning);
-});
-function resumeScroll(){autoScroll=true;$('terminal').scrollTop=$('terminal').scrollHeight;$('resumeBtn').classList.remove('show');}
+// ─── Scan Lifecycle ───────────────────────────────────────────────────────────
+$('domainInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !STATE.scanning) startScan(); });
 
-async function startScan(){
-  const domain=$('domainInput').value.trim();
-  if(!domain||scanning)return;
-  if(!/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/.test(domain)){alert('Invalid domain');return;}
-  if(!selectedTools.size){alert('Select at least one tool');return;}
-  const wl=wordlistMode==='custom'?($('wlPath').value.trim()||'default'):'default';
-  try{
-    const res=await fetch('/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({domain,tools:[...selectedTools],wordlist:wl})});
-    if(!res.ok){const e=await res.json();alert(e.detail||'Error');return;}
-    const d=await res.json();
-    currentScanId=d.scan_id;seenSC.clear();lineCount=0;resultCount=0;
-    setScan(true);clearTerminal();startTimer();connectSSE(currentScanId);
-  }catch(e){alert(e.message);}
+async function startScan() {
+  const domain = $('domainInput').value.trim();
+  if (!domain || STATE.scanning) return;
+  if (!/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/.test(domain)) { alert('Invalid domain'); return; }
+  if (!STATE.selectedTools.size) { alert('Select at least one tool'); return; }
+  const wl = STATE.wordlistMode === 'custom' ? ($('wlPath').value.trim() || 'default') : 'default';
+  try {
+    const res = await fetch('/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domain, tools: [...STATE.selectedTools], wordlist: wl }),
+    });
+    if (!res.ok) { const e = await res.json(); alert(e.detail || 'Error'); return; }
+    const d = await res.json();
+    STATE.scanId = d.scan_id;
+    STATE.domain = domain;
+    setScan(true);
+    clearResults();
+    startTimer();
+    connectSSE(STATE.scanId);
+  } catch (e) { alert(e.message); }
 }
 
-function setScan(on){
-  scanning=on;
-  const btn=$('scanBtn');btn.disabled=on;btn.classList.toggle('scanning',on);
-  $('btnLbl').textContent=on?'SCANNING':'SCAN';$('domainInput').disabled=on;
-  $('statusSub').classList.toggle('show',on);$('elDot').classList.toggle('live',on);
-  if(!on)$('elDot').style.background='var(--green)';
-  $('expPdf').disabled=true;$('expCsv').disabled=true;
-  document.querySelectorAll('.tool-item').forEach(el=>el.classList.toggle('locked',on));
+function setScan(on) {
+  STATE.scanning = on;
+  const btn = $('scanBtn');
+  btn.disabled = on; btn.classList.toggle('scanning', on);
+  $('btnLbl').textContent = on ? 'SCANNING' : 'SCAN';
+  $('domainInput').disabled = on;
+  $('elDot').classList.toggle('live', on);
+  if (!on) $('elDot').style.background = 'var(--green)';
+  $('expPdf').disabled = true; $('expCsv').disabled = true;
+  document.querySelectorAll('.tool-item').forEach(el => el.classList.toggle('locked', on));
 }
 
-function clearTerminal(){
-  $('terminal').querySelectorAll('.line').forEach(el=>el.remove());
-  $('termEmpty').style.display='';$('outInfo').textContent='';$('progFill').style.width='0%';$('liveTxt').textContent='';
+function clearResults() {
+  STATE.store = {};
+  STATE.pipeline = {};
+  STATE.stats = { subdomains: 0, liveHosts: 0, openPorts: 0, wafsDetected: 0, techs: new Set() };
+  STATE.ffufHosts = new Set();
+  $('pipeline').innerHTML = '';
+  $('resultPanels').innerHTML = '';
+  $('statsBar').innerHTML = '';
+  $('progressSection').style.display = 'none';
+  $('resultsSection').style.display = 'none';
 }
 
-function connectSSE(id){
-  if(eventSource)eventSource.close();
-  eventSource=new EventSource('/scan/'+id+'/stream');
-  eventSource.onmessage=e=>{
-    const d=JSON.parse(e.data);
-    if(d.type==='step_start')$('stepTxt').textContent='Running: '+d.tool;
-    else if(d.type==='step_done'){resultCount+=d.count||0;$('liveTxt').textContent=resultCount+' results';}
-    else if(d.type==='line')appendLog(d.tool,d.line,d.ts,d.data||{});
-    else if(d.type==='status'&&['completed','error','timeout'].includes(d.status))finishScan(d.status);
-    else if(d.type==='done'){eventSource.close();eventSource=null;}
-  };
-  eventSource.onerror=()=>{eventSource.close();eventSource=null;if(scanning)finishScan('error');};
+function startTimer() {
+  STATE.timerStart = Date.now(); clearInterval(STATE.timerInterval);
+  STATE.timerInterval = setInterval(() => {
+    const s = Math.floor((Date.now() - STATE.timerStart) / 1000);
+    $('elTime').textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+  }, 1000);
 }
 
-function appendLog(tool,line,ts,data){
-  lineCount++;
-  const sc=data.status_code||0;
-  let scCls='';
-  if(sc>=200&&sc<300)scCls='2xx';else if(sc>=300&&sc<400)scCls='3xx';else if(sc>=400&&sc<500)scCls='4xx';else if(sc>=500)scCls='5xx';
-  if(scCls)seenSC.add(sc);
-  const row=document.createElement('div');
-  row.className='line';
-  if(currentFilter!=='all'&&scCls&&scCls!==currentFilter)row.classList.add('hide');
-  if(scCls)row.dataset.sc=scCls;
-  const ts_s=ts?new Date(ts*1000).toLocaleTimeString('en-GB',{hour12:false}):'';
-  const tc='t-'+tool.toLowerCase().replace(/[^a-z0-9]/g,'');
-  let html=`<span class="l-ts">${esc(ts_s)}</span><span class="l-tool ${tc}">${esc(tool)}</span>`;
-  if(sc)html+=`<span class="l-sc sc-${scCls[0]}">${sc}</span>`;
-  html+=`<span class="l-msg">${esc(line)}</span>`;
-  row.innerHTML=html;
-  $('terminal').insertBefore(row,$('resumeBtn'));
-  $('outInfo').textContent=lineCount+' lines';
-  if(autoScroll)$('terminal').scrollTop=$('terminal').scrollHeight;
-}
-
-function setFilter(f,btn){
-  currentFilter=f;
-  document.querySelectorAll('.f-pill').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-  $('terminal').querySelectorAll('.line').forEach(r=>{
-    if(f==='all'){r.classList.remove('hide');return;}
-    const sc=r.dataset.sc;if(!sc){r.classList.remove('hide');return;}
-    r.classList.toggle('hide',sc!==f);
+function finishScan(status) {
+  setScan(false); clearInterval(STATE.timerInterval);
+  if (status === 'completed') { $('expPdf').disabled = false; $('expCsv').disabled = false; }
+  loadHistory();
+  // mark remaining pending/running as done or error
+  Object.keys(STATE.pipeline).forEach(tool => {
+    if (STATE.pipeline[tool] === 'running' || STATE.pipeline[tool] === 'pending') {
+      if (status === 'error') setPipeState(tool, 'error');
+    }
   });
 }
 
-function startTimer(){
-  timerStart=Date.now();clearInterval(timerInterval);
-  timerInterval=setInterval(()=>{
-    const s=Math.floor((Date.now()-timerStart)/1000);
-    $('elTime').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
-  },1000);
+// ─── SSE ──────────────────────────────────────────────────────────────────────
+function connectSSE(id) {
+  if (STATE.eventSource) STATE.eventSource.close();
+  STATE.eventSource = new EventSource('/scan/' + id + '/stream');
+  STATE.eventSource.onmessage = e => {
+    let d;
+    try { d = JSON.parse(e.data); } catch { return; }
+    switch (d.type) {
+      case 'plan':       onPlan(d);              break;
+      case 'status':     if (['completed','error','timeout'].includes(d.status)) finishScan(d.status); break;
+      case 'step_start': setPipeState(d.tool, 'running'); setActivePanel(d.tool, true); break;
+      case 'step_done':  setPipeState(d.tool, 'done', d.count); setActivePanel(d.tool, false); break;
+      case 'step_skip':  setPipeState(d.tool, 'skipped'); break;
+      case 'line':       onLine(d);              break;
+      case 'done':       STATE.eventSource.close(); STATE.eventSource = null; break;
+    }
+  };
+  STATE.eventSource.onerror = () => {
+    STATE.eventSource.close(); STATE.eventSource = null;
+    if (STATE.scanning) finishScan('error');
+  };
 }
 
-function finishScan(status){
-  setScan(false);clearInterval(timerInterval);$('progFill').style.width='100%';
-  $('stepTxt').textContent=status==='completed'?'Completed':'Error';
-  if(status==='completed'){$('expPdf').disabled=false;$('expCsv').disabled=false;}
-  loadHistory();
+function onPlan(event) {
+  const tools = event.tools || [];
+  tools.forEach(t => {
+    STATE.store[t] = t === 'whois' ? {} : [];
+    STATE.pipeline[t] = 'pending';
+  });
+  buildPipelineBar(tools);
+  buildResultPanels(tools);
+  $('progressSection').style.display = '';
+  $('resultsSection').style.display = '';
 }
 
-function doExport(fmt){
-  if(!currentScanId)return;
-  const chips=document.querySelectorAll('#expFilters .exp-chip.on');
-  const ranges=[...chips].map(c=>c.dataset.sc),codes=[];
-  seenSC.forEach(sc=>{const r=sc>=500?'5xx':sc>=400?'4xx':sc>=300?'3xx':'2xx';if(ranges.includes(r))codes.push(sc);});
-  const p=codes.length&&codes.length<seenSC.size?'status_codes='+codes.join(','):'';
-  window.open('/scan/'+currentScanId+'/export/'+fmt+(p?'?'+p:''),'_blank');
+function onLine(event) {
+  const { tool, data } = event;
+  if (!data || typeof data !== 'object' || !Object.keys(data).length) return;
+  switch (tool) {
+    case 'httpx':    ingestHttpx(data);   break;
+    case 'nmap':     ingestNmap(data);    break;
+    case 'dig':      ingestDig(data);     break;
+    case 'whois':    ingestWhois(data);   break;
+    case 'wafw00f':  ingestWafw00f(data); break;
+    case 'whatweb':  ingestWhatweb(data); break;
+    case 'ffuf':     ingestFfuf(data);    break;
+  }
 }
 
-function copyOutput(){
-  const text=[...$('terminal').querySelectorAll('.line:not(.hide)')].map(l=>l.textContent).join('\n');
-  navigator.clipboard.writeText(text).then(()=>{const b=document.querySelector('.copy-btn');b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',1500);});
+// ─── Pipeline Bar ─────────────────────────────────────────────────────────────
+function buildPipelineBar(tools) {
+  const pipe = $('pipeline');
+  pipe.innerHTML = '';
+  tools.forEach((tool, i) => {
+    if (i > 0) {
+      const c = document.createElement('div');
+      c.className = 'pipe-connector';
+      pipe.appendChild(c);
+    }
+    const step = document.createElement('div');
+    step.className = 'pipe-step';
+    step.id = 'pipe-' + tool;
+    step.dataset.tool = tool;
+    step.dataset.state = 'pending';
+    const info = TOOL_INFO[tool] || {};
+    step.innerHTML = `<div class="pipe-icon" id="pipe-icon-${esc(tool)}">○</div>
+      <div class="pipe-name">${esc(tool)}</div>
+      <div class="pipe-count" id="pipe-count-${esc(tool)}"></div>`;
+    pipe.appendChild(step);
+  });
 }
 
-function toggleHist(){$('histToggle').classList.toggle('open');}
+function setPipeState(tool, state, count) {
+  STATE.pipeline[tool] = state;
+  const step = $('pipe-' + tool);
+  if (!step) return;
+  step.dataset.state = state;
+  const icon = $('pipe-icon-' + tool);
+  if (icon) {
+    if (state === 'running') icon.innerHTML = '<div class="pipe-spinner"></div>';
+    else if (state === 'done')    icon.textContent = '✓';
+    else if (state === 'skipped') icon.textContent = '—';
+    else if (state === 'error')   icon.textContent = '✕';
+    else icon.textContent = '○';
+  }
+  const countEl = $('pipe-count-' + tool);
+  if (countEl && count !== undefined) countEl.textContent = count + ' results';
+}
 
-async function loadHistory(){
-  try{
-    const r=await fetch('/scans'),d=await r.json(),scans=d.scans||[];
-    $('histCount').textContent='('+scans.length+')';
-    const tbody=$('histRows'),empty=$('histEmpty');
-    if(!scans.length){tbody.innerHTML='';empty.style.display='block';return;}
-    empty.style.display='none';
-    tbody.innerHTML=scans.slice(0,10).map(s=>{
-      const t=new Date(s.created_at*1000).toLocaleString();
-      let dur='—';
-      if(s.finished_at){const d=Math.floor(s.finished_at-s.created_at);dur=Math.floor(d/60)+'m '+(d%60)+'s';}
-      return `<tr><td>${esc(s.domain)}</td><td><span class="s-badge s-${s.status}">${esc(s.status)}</span></td><td style="font-size:10px;color:var(--txt-3)">${esc((s.tools||[]).join(', '))}</td><td>${esc(t)}</td><td style="font-family:var(--mono);font-size:11px">${esc(dur)}</td><td><button class="h-view" onclick="viewScan('${s.id}')">View</button></td></tr>`;
+function setActivePanel(tool, active) {
+  const panel = $('panel-' + tool);
+  if (panel) panel.classList.toggle('active', active);
+}
+
+// ─── Result Panels ────────────────────────────────────────────────────────────
+function buildResultPanels(tools) {
+  const container = $('resultPanels');
+  container.innerHTML = '';
+  tools.forEach(tool => {
+    const info = TOOL_INFO[tool] || { label: tool, desc: '' };
+    const panel = document.createElement('div');
+    panel.className = 'result-panel';
+    panel.id = 'panel-' + tool;
+
+    panel.innerHTML = `
+      <div class="panel-header" onclick="togglePanel('${esc(tool)}')">
+        <div class="ph-left">
+          <span class="panel-tool-badge t-${esc(tool)}">${esc(tool)}</span>
+          <span class="panel-title">${esc(info.label)}</span>
+          <span class="panel-count" id="pcount-${esc(tool)}" style="display:none">0</span>
+        </div>
+        <div class="ph-right">
+          <input class="panel-search" id="psearch-${esc(tool)}" placeholder="Filter..." onclick="event.stopPropagation()" oninput="filterPanel('${esc(tool)}')">
+          <button class="panel-csv-btn" onclick="event.stopPropagation();exportSection('${esc(tool)}')">↓ CSV</button>
+          <span class="panel-chevron">▼</span>
+        </div>
+      </div>
+      <div class="panel-body" id="pbody-${esc(tool)}">
+        ${buildPanelBody(tool)}
+      </div>`;
+    container.appendChild(panel);
+  });
+}
+
+function buildPanelBody(tool) {
+  switch (tool) {
+    case 'httpx':
+      return `<div class="panel-empty" id="empty-httpx">Waiting for data…</div>
+        <table class="data-table" id="tbl-httpx" style="display:none">
+          <thead><tr>
+            <th class="sortable" data-col="0">Subdomain / URL</th>
+            <th class="sortable" data-col="1">Host</th>
+            <th class="sortable" data-col="2">Status</th>
+            <th class="sortable" data-col="3">Title</th>
+            <th>Tech Stack</th>
+          </tr></thead>
+          <tbody id="tbody-httpx"></tbody>
+        </table>`;
+    case 'nmap':
+      return `<div class="panel-empty" id="empty-nmap">Waiting for data…</div>
+        <table class="data-table" id="tbl-nmap" style="display:none">
+          <thead><tr>
+            <th class="sortable" data-col="0">Port</th>
+            <th>Protocol</th>
+            <th class="sortable" data-col="2">State</th>
+            <th class="sortable" data-col="3">Service</th>
+            <th>Version</th>
+          </tr></thead>
+          <tbody id="tbody-nmap"></tbody>
+        </table>`;
+    case 'dig':
+      return `<div class="panel-empty" id="empty-dig">Waiting for data…</div>
+        <div class="dns-container" id="dns-container" style="display:none"></div>`;
+    case 'whois':
+      return `<div class="panel-empty" id="empty-whois">Waiting for data…</div>
+        <div class="whois-grid" id="whois-grid" style="display:none"></div>`;
+    case 'wafw00f':
+      return `<div class="panel-empty" id="empty-wafw00f">Waiting for data…</div>
+        <div class="waf-grid" id="waf-grid" style="display:none"></div>`;
+    case 'whatweb':
+      return `<div class="panel-empty" id="empty-whatweb">Waiting for data…</div>
+        <table class="data-table" id="tbl-whatweb" style="display:none">
+          <thead><tr>
+            <th class="sortable" data-col="0">URL</th>
+            <th class="sortable" data-col="1">Status</th>
+            <th>Technologies</th>
+          </tr></thead>
+          <tbody id="tbody-whatweb"></tbody>
+        </table>`;
+    case 'ffuf':
+      return `<div class="panel-empty" id="empty-ffuf">Waiting for data…</div>
+        <div id="ffuf-container" style="display:none">
+          <div id="ffuf-host-bar" class="ffuf-host-header" style="display:none">
+            <span class="fuzz-label">Fuzzing</span>
+            <span class="fuzz-target" id="ffuf-host-label"></span>
+          </div>
+          <table class="data-table" id="tbl-ffuf">
+            <thead><tr>
+              <th class="sortable" data-col="0">Full URL</th>
+              <th class="sortable" data-col="1">Status</th>
+              <th class="sortable" data-col="2">Size</th>
+              <th class="sortable" data-col="3">Words</th>
+              <th class="sortable" data-col="4">Lines</th>
+            </tr></thead>
+            <tbody id="tbody-ffuf"></tbody>
+          </table>
+        </div>`;
+    default:
+      return `<div class="panel-empty">No display available for this tool.</div>`;
+  }
+}
+
+function showContent(tool, containerId, tableId) {
+  const empty = $('empty-' + tool);
+  const content = $(containerId || 'tbl-' + tool);
+  if (empty) empty.style.display = 'none';
+  if (content) content.style.display = '';
+}
+
+// ─── Panel Interactions ───────────────────────────────────────────────────────
+function togglePanel(tool) {
+  const panel = $('panel-' + tool);
+  if (panel) panel.classList.toggle('collapsed');
+}
+
+function filterPanel(tool) {
+  const input = $('psearch-' + tool);
+  if (!input) return;
+  const q = input.value.toLowerCase().trim();
+  const tbody = $('tbody-' + tool);
+  if (tbody) {
+    tbody.querySelectorAll('tr').forEach(tr => {
+      tr.classList.toggle('filtered', q.length > 0 && !tr.textContent.toLowerCase().includes(q));
+    });
+  }
+  // For WAF grid
+  if (tool === 'wafw00f') {
+    const grid = $('waf-grid');
+    if (grid) grid.querySelectorAll('.waf-card').forEach(card => {
+      card.classList.toggle('filtered', q.length > 0 && !card.textContent.toLowerCase().includes(q));
+    });
+  }
+  // For DNS
+  if (tool === 'dig') {
+    const container = $('dns-container');
+    if (container) container.querySelectorAll('tr').forEach(tr => {
+      tr.classList.toggle('filtered', q.length > 0 && !tr.textContent.toLowerCase().includes(q));
+    });
+  }
+}
+
+function updatePanelCount(tool, n) {
+  const el = $('pcount-' + tool);
+  if (!el) return;
+  el.textContent = n;
+  el.style.display = n > 0 ? '' : 'none';
+}
+
+// ─── Ingest: HTTPX ───────────────────────────────────────────────────────────
+function ingestHttpx(data) {
+  if (!data.url) return;
+  STATE.store.httpx = STATE.store.httpx || [];
+  STATE.store.httpx.push(data);
+  STATE.stats.liveHosts++;
+  (data.tech || []).forEach(t => STATE.stats.techs.add(t));
+  showContent('httpx');
+  appendHttpxRow(data);
+  updatePanelCount('httpx', STATE.store.httpx.length);
+  updateStats();
+}
+
+function appendHttpxRow(data) {
+  const tbody = $('tbody-httpx');
+  if (!tbody) return;
+  const sc = data.status_code || 0;
+  const techHtml = (data.tech || []).map(t => `<span class="tech-chip">${esc(t)}</span>`).join('');
+  const url = safeUrl(data.url);
+  const tr = document.createElement('tr');
+  tr.dataset.search = ((data.url || '') + ' ' + (data.title || '') + ' ' + (data.host || '') + ' ' + (data.tech || []).join(' ')).toLowerCase();
+  tr.innerHTML = `
+    <td>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="mono-link">${esc(data.url)}</a>` : `<span class="mono">${esc(data.url)}</span>`}</td>
+    <td class="mono" style="color:var(--txt-2)">${esc(data.host || '')}</td>
+    <td><span class="sc-badge ${statusClass(sc)}">${sc || '—'}</span></td>
+    <td style="color:var(--txt-2)">${esc(data.title || '')}</td>
+    <td class="tech-cell">${techHtml || '<span style="color:var(--txt-3)">—</span>'}</td>`;
+  tbody.appendChild(tr);
+}
+
+// ─── Ingest: NMAP ────────────────────────────────────────────────────────────
+function ingestNmap(data) {
+  STATE.store.nmap = STATE.store.nmap || [];
+  STATE.store.nmap.push(data);
+  if (data.port && data.state === 'open') STATE.stats.openPorts++;
+  if (data.port) {
+    showContent('nmap');
+    appendNmapRow(data);
+    updatePanelCount('nmap', STATE.store.nmap.filter(r => r.port).length);
+    updateStats();
+  }
+}
+
+function appendNmapRow(data) {
+  if (!data.port) return;
+  const tbody = $('tbody-nmap');
+  if (!tbody) return;
+  const stateClass = data.state === 'open' ? 'state-open' : data.state === 'closed' ? 'state-closed' : 'state-filtered';
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="mono" style="color:var(--txt)">${esc(String(data.port))}<span style="font-size:10px;color:var(--txt-3)">/${esc(data.protocol || 'tcp')}</span></td>
+    <td style="color:var(--txt-3);font-size:11px">${esc(data.protocol || '')}</td>
+    <td><span class="state-badge ${stateClass}">${esc(data.state || '')}</span></td>
+    <td>${esc(data.service || '')}</td>
+    <td class="version">${esc(data.version || '')}</td>`;
+  tbody.appendChild(tr);
+}
+
+// ─── Ingest: DIG (DNS) ───────────────────────────────────────────────────────
+function ingestDig(data) {
+  if (!data.type) return;
+  STATE.store.dig = STATE.store.dig || [];
+  STATE.store.dig.push(data);
+  showContent('dig', 'dns-container');
+  appendDigRow(data);
+  updatePanelCount('dig', STATE.store.dig.length);
+}
+
+function appendDigRow(data) {
+  const container = $('dns-container');
+  if (!container) return;
+  const type = data.type || 'OTHER';
+  const sectionId = 'dns-tbody-' + type;
+  let tbody = $(sectionId);
+  if (!tbody) {
+    const section = document.createElement('div');
+    section.className = 'dns-section';
+    section.innerHTML = `<div class="dns-type-header">${esc(type)}</div>
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>TTL</th><th>Value</th></tr></thead>
+        <tbody id="${sectionId}"></tbody>
+      </table>`;
+    container.appendChild(section);
+    tbody = $(sectionId);
+  }
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="mono" style="color:var(--txt-2)">${esc(data.name || '')}</td>
+    <td class="mono" style="color:var(--txt-3);font-size:11px">${esc(String(data.ttl || ''))}</td>
+    <td class="mono">${esc(data.value || '')}</td>`;
+  tbody.appendChild(tr);
+}
+
+// ─── Ingest: WHOIS ───────────────────────────────────────────────────────────
+function ingestWhois(data) {
+  if (!data.field) return;
+  const store = STATE.store.whois = STATE.store.whois || {};
+  if (data.field === 'name server') {
+    store.name_servers = store.name_servers || [];
+    if (!store.name_servers.includes(data.value)) store.name_servers.push(data.value);
+  } else {
+    store[data.field] = data.value;
+  }
+  showContent('whois', 'whois-grid');
+  renderWhoisCard();
+  const count = Object.keys(store).length + (store.name_servers ? store.name_servers.length - 1 : 0);
+  updatePanelCount('whois', count);
+}
+
+function renderWhoisCard() {
+  const container = $('whois-grid');
+  if (!container) return;
+  const w = STATE.store.whois || {};
+  const fields = [
+    ['Registrar',   w['registrar']],
+    ['Created',     w['creation']],
+    ['Expires',     w['expiration']],
+    ['Updated',     w['updated']],
+    ['Registrant',  w['registrant']],
+    ['Org',         w['org']],
+    ['Country',     w['country']],
+    ['DNSSEC',      w['dnssec']],
+  ];
+  container.innerHTML = fields
+    .filter(([, v]) => v)
+    .map(([label, val]) => `
+      <div class="whois-cell">
+        <div class="whois-label">${esc(label)}</div>
+        <div class="whois-value">${esc(val)}</div>
+      </div>`).join('') +
+    ((w.name_servers && w.name_servers.length)
+      ? `<div class="whois-cell whois-cell--full">
+           <div class="whois-label">Name Servers</div>
+           ${w.name_servers.map(ns => `<div class="whois-ns-item">${esc(ns)}</div>`).join('')}
+         </div>` : '');
+}
+
+// ─── Ingest: WAFW00F ─────────────────────────────────────────────────────────
+function ingestWafw00f(data) {
+  if (!data.url) return;
+  STATE.store.wafw00f = STATE.store.wafw00f || [];
+  STATE.store.wafw00f.push(data);
+  if (data.waf_detected) STATE.stats.wafsDetected++;
+  showContent('wafw00f', 'waf-grid');
+  appendWafCard(data);
+  updatePanelCount('wafw00f', STATE.store.wafw00f.length);
+  updateStats();
+}
+
+function appendWafCard(data) {
+  const grid = $('waf-grid');
+  if (!grid) return;
+  const detected = data.waf_detected;
+  const card = document.createElement('div');
+  card.className = 'waf-card';
+  const url = safeUrl(data.url);
+  card.innerHTML = `
+    <div class="waf-status-dot ${detected ? 'waf-on' : 'waf-off'}"></div>
+    <div class="waf-info">
+      <div class="waf-url">${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="mono-link">${esc(data.url)}</a>` : esc(data.url)}</div>
+      <div>${detected
+        ? `<span class="waf-name">${esc(data.waf_name || 'WAF Detected')}</span>${data.waf_vendor && data.waf_vendor !== data.waf_name ? ` <span class="waf-vendor">by ${esc(data.waf_vendor)}</span>` : ''}`
+        : `<span class="waf-none">No WAF detected</span>`
+      }</div>
+    </div>`;
+  grid.appendChild(card);
+}
+
+// ─── Ingest: WHATWEB ─────────────────────────────────────────────────────────
+function ingestWhatweb(data) {
+  if (!data.url) return;
+  STATE.store.whatweb = STATE.store.whatweb || [];
+  STATE.store.whatweb.push(data);
+  (data.technologies || []).forEach(t => STATE.stats.techs.add(t));
+  showContent('whatweb');
+  appendWhatwebRow(data);
+  updatePanelCount('whatweb', STATE.store.whatweb.length);
+  updateStats();
+}
+
+function appendWhatwebRow(data) {
+  const tbody = $('tbody-whatweb');
+  if (!tbody) return;
+  const sc = data.status_code || 0;
+  const techHtml = (data.technologies || []).map(t => `<span class="tech-chip">${esc(t)}</span>`).join('');
+  const url = safeUrl(data.url);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="mono-link">${esc(data.url)}</a>` : `<span class="mono">${esc(data.url)}</span>`}</td>
+    <td><span class="sc-badge ${statusClass(sc)}">${sc || '—'}</span></td>
+    <td class="tech-cell">${techHtml || '<span style="color:var(--txt-3)">—</span>'}</td>`;
+  tbody.appendChild(tr);
+}
+
+// ─── Ingest: FFUF ────────────────────────────────────────────────────────────
+function ingestFfuf(data) {
+  if (!data.path || !data.status_code) return;
+  STATE.store.ffuf = STATE.store.ffuf || [];
+  STATE.store.ffuf.push(data);
+
+  const container = $('ffuf-container');
+  const empty = $('empty-ffuf');
+  if (empty) empty.style.display = 'none';
+  if (container) container.style.display = '';
+
+  // Update host label
+  if (data.host) {
+    const hostLabel = $('ffuf-host-label');
+    const hostBar = $('ffuf-host-bar');
+    if (hostBar && hostLabel) {
+      if (!STATE.ffufHosts.has(data.host)) {
+        STATE.ffufHosts.add(data.host);
+        if (STATE.ffufHosts.size === 1) {
+          hostLabel.textContent = data.host;
+        } else {
+          hostLabel.textContent = STATE.ffufHosts.size + ' targets';
+        }
+        hostBar.style.display = '';
+      }
+    }
+  }
+
+  appendFfufRow(data);
+  updatePanelCount('ffuf', STATE.store.ffuf.length);
+}
+
+function appendFfufRow(data) {
+  const tbody = $('tbody-ffuf');
+  if (!tbody) return;
+  const host = (data.host || '').replace(/\/$/, '');
+  const path = data.path || '';
+  const fullUrl = host ? host + (path.startsWith('/') ? path : '/' + path) : path;
+  const sc = data.status_code || 0;
+  const url = safeUrl(fullUrl);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" class="mono-link">${esc(fullUrl)}</a>` : `<span class="mono">${esc(fullUrl)}</span>`}</td>
+    <td><span class="sc-badge ${statusClass(sc)}">${sc}</span></td>
+    <td class="mono" style="color:var(--txt-2)">${esc(String(data.size || ''))}</td>
+    <td class="mono" style="color:var(--txt-2)">${esc(String(data.words || ''))}</td>
+    <td class="mono" style="color:var(--txt-2)">${esc(String(data.lines || ''))}</td>`;
+  tbody.appendChild(tr);
+}
+
+// ─── Stats Bar ────────────────────────────────────────────────────────────────
+function updateStats() {
+  const s = STATE.stats;
+  const defs = [
+    { label: 'Live Hosts',    val: s.liveHosts,    cls: 'livehost' },
+    { label: 'Open Ports',    val: s.openPorts,    cls: 'port' },
+    { label: 'WAFs Detected', val: s.wafsDetected, cls: 'waf' },
+    { label: 'Technologies',  val: s.techs.size,   cls: 'tech' },
+  ];
+  $('statsBar').innerHTML = defs
+    .filter(d => d.val > 0)
+    .map(d => `<div class="stat-chip ${d.cls}"><span class="stat-val">${d.val}</span><span class="stat-label">${d.label}</span></div>`)
+    .join('');
+}
+
+// ─── Export per section ───────────────────────────────────────────────────────
+function exportSection(tool) {
+  const data = STATE.store[tool];
+  if (!data) return;
+  const csv = buildCsv(tool, data);
+  if (!csv) return;
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `argus_${tool}_${STATE.scanId || 'export'}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function buildCsv(tool, data) {
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const row = r => r.map(q).join(',');
+
+  if (tool === 'whois') {
+    const rows = [['Field', 'Value']];
+    Object.entries(data).forEach(([k, v]) => {
+      if (Array.isArray(v)) v.forEach(ns => rows.push([k, ns]));
+      else rows.push([k, v]);
+    });
+    return rows.map(row).join('\r\n');
+  }
+
+  if (!Array.isArray(data) || !data.length) return '';
+
+  const schemas = {
+    httpx:   { h: ['URL','Host','Status','Title','Server','ContentLength','Tech','RedirectTo'],
+               r: d => [d.url,d.host,d.status_code,d.title,d.server,d.content_length,(d.tech||[]).join('; '),d.redirect_to||''] },
+    nmap:    { h: ['Port','Protocol','State','Service','Version'],
+               r: d => d.port ? [d.port,d.protocol,d.state,d.service,d.version] : null },
+    dig:     { h: ['Name','TTL','Type','Value'],
+               r: d => [d.name,d.ttl,d.type,d.value] },
+    wafw00f: { h: ['URL','WAF_Detected','WAF_Name','WAF_Vendor'],
+               r: d => [d.url,d.waf_detected,d.waf_name,d.waf_vendor] },
+    whatweb: { h: ['URL','Status','Technologies'],
+               r: d => [d.url,d.status_code,(d.technologies||[]).join('; ')] },
+    ffuf:    { h: ['URL','Status','Size','Words','Lines'],
+               r: d => { const h=(d.host||'').replace(/\/$/,''); const p=d.path||''; return [h+(p.startsWith('/')?p:'/'+p),d.status_code,d.size,d.words,d.lines]; } },
+  };
+  const s = schemas[tool];
+  if (!s) return '';
+  const lines = [row(s.h)];
+  data.forEach(item => { const r = s.r(item); if (r) lines.push(row(r)); });
+  return lines.join('\r\n');
+}
+
+function doExport(fmt) {
+  if (!STATE.scanId) return;
+  window.open('/scan/' + STATE.scanId + '/export/' + fmt, '_blank');
+}
+
+// ─── History ──────────────────────────────────────────────────────────────────
+function toggleHist() { $('histToggle').classList.toggle('open'); }
+
+async function loadHistory() {
+  try {
+    const r = await fetch('/scans'), d = await r.json(), scans = d.scans || [];
+    $('histCount').textContent = '(' + scans.length + ')';
+    const tbody = $('histRows'), empty = $('histEmpty');
+    if (!scans.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = scans.slice(0, 10).map(s => {
+      const t = new Date(s.created_at * 1000).toLocaleString();
+      let dur = '—';
+      if (s.finished_at) { const d = Math.floor(s.finished_at - s.created_at); dur = Math.floor(d / 60) + 'm ' + (d % 60) + 's'; }
+      return `<tr><td>${esc(s.domain)}</td><td><span class="s-badge s-${s.status}">${esc(s.status)}</span></td><td style="font-size:10px;color:var(--txt-3)">${esc((s.tools || []).join(', '))}</td><td>${esc(t)}</td><td style="font-family:var(--mono);font-size:11px">${esc(dur)}</td><td><button class="h-view" onclick="viewScan('${esc(s.id)}')">View</button></td></tr>`;
     }).join('');
-  }catch(e){console.error(e);}
+  } catch (e) { console.error(e); }
 }
 
-async function viewScan(id){
-  try{
-    const r=await fetch('/scan/'+id+'/result'),data=await r.json();
-    currentScanId=id;seenSC.clear();lineCount=0;resultCount=0;clearTerminal();
-    (data.results||[]).forEach(r=>{let d=r.data||{};if(typeof d==='string')try{d=JSON.parse(d)}catch(e){d={}}appendLog(r.tool,r.line,r.ts,d);});
-    $('progFill').style.width='100%';$('statusSub').classList.add('show');
-    $('elDot').classList.remove('live');$('elDot').style.background='var(--green)';
-    $('stepTxt').textContent='Completed';
-    if(data.scan.status==='completed'){$('expPdf').disabled=false;$('expCsv').disabled=false;}
-    if(data.scan.finished_at&&data.scan.created_at){const d=Math.floor(data.scan.finished_at-data.scan.created_at);$('elTime').textContent=String(Math.floor(d/60)).padStart(2,'0')+':'+String(d%60).padStart(2,'0');}
-  }catch(e){alert(e.message);}
-}
+async function viewScan(id) {
+  try {
+    const r = await fetch('/scan/' + id + '/result'), data = await r.json();
+    STATE.scanId = id;
+    STATE.domain = data.scan.domain;
+    setScan(false); clearResults();
 
-function esc(s){if(!s)return '';const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+    const tools = data.scan.tools || [];
+    onPlan({ tools, tools_info: {} });
+    tools.forEach(t => setPipeState(t, 'done'));
+
+    (data.results || []).forEach(row => {
+      let d = row.data || {};
+      if (typeof d === 'string') try { d = JSON.parse(d); } catch { d = {}; }
+      if (row.tool !== 'system' && d && typeof d === 'object' && Object.keys(d).length) {
+        onLine({ tool: row.tool, line: row.line, data: d, ts: row.ts });
+      }
+    });
+
+    $('expPdf').disabled = data.scan.status !== 'completed';
+    $('expCsv').disabled = data.scan.status !== 'completed';
+    if (data.scan.finished_at && data.scan.created_at) {
+      const dur = Math.floor(data.scan.finished_at - data.scan.created_at);
+      $('elTime').textContent = String(Math.floor(dur / 60)).padStart(2, '0') + ':' + String(dur % 60).padStart(2, '0');
+    }
+  } catch (e) { alert(e.message); }
+}
 </script>
 </body>
 </html>
