@@ -9,7 +9,7 @@ from fastapi.responses import StreamingResponse, Response, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from db import init_db, create_scan, get_scan, get_scan_results, get_all_scans
+from db import init_db, create_scan, get_scan, get_scan_results, get_all_scans, DB_PATH
 from scanner import (
     validate_domain, run_scan, subscribe, unsubscribe,
     get_tools_info, resolve_tools, DEFAULT_TOOLS, stop_scan,
@@ -123,6 +123,24 @@ async def scan_result(scan_id: str):
         raise HTTPException(status_code=404, detail="Scan not found")
     results = await get_scan_results(scan_id)
     return {"scan": scan, "results": results}
+
+@app.delete("/scan/{scan_id}")
+async def delete_scan_route(scan_id: str):
+    scan = await get_scan(scan_id)
+    if not scan:
+        raise HTTPException(status_code=404, detail="Scan not found")
+
+    try:
+        import aiosqlite
+        async with aiosqlite.connect(DB_PATH) as db:
+            # Delete all results related to this scan
+            await db.execute("DELETE FROM results WHERE scan_id = ?", (scan_id,))
+            # Delete the scan itself
+            await db.execute("DELETE FROM scans WHERE id = ?", (scan_id,))
+            await db.commit()
+        return {"status": "success", "message": f"Scan {scan_id} deleted successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete scan: {str(e)}")
 
 @app.get("/scan/{scan_id}/export/pdf")
 async def scan_export_pdf(

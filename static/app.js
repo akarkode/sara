@@ -665,7 +665,10 @@ async function loadHistory() {
                 <td><div style="display:flex;gap:4px">${(s.tools || []).map(t => `<span class="tool-tag" style="font-size:9px">${t}</span>`).join('')}</div></td>
                 <td style="font-size:12px;color:var(--txt-dim)">${new Date(s.created_at * 1000).toLocaleString()}</td>
                 <td style="font-family:var(--font-mono);font-size:12px">${s.finished_at ? Math.floor((s.finished_at - s.created_at) / 60) + 'm ' + (Math.floor(s.finished_at - s.created_at) % 60) + 's' : '—'}</td>
-                <td><button class="nav-item" style="padding:4px 10px;font-size:11px" onclick="viewScan('${s.id}')">View</button></td>
+                <td style="display:flex;gap:4px">
+                    <button class="nav-item" style="padding:4px 10px;font-size:11px" onclick="viewScan('${s.id}')">View</button>
+                    <button class="nav-item" style="padding:4px 10px;font-size:11px;color:var(--red)" onclick="deleteScan('${s.id}', '${s.domain}')">Delete</button>
+                </td>
             </tr>
         `).join('');
     } catch (e) { console.error('Failed to load history:', e); }
@@ -679,16 +682,35 @@ async function viewScan(id) {
         STATE.scanId = id;
         STATE.domain = data.scan.domain;
         $('domainInput').value = data.scan.domain;
-        
+
         clearResults();
         onPlan({ tools: data.scan.tools });
-        
+
         data.results.forEach(res => {
             if (res.tool !== 'system') onLine({ tool: res.tool, data: res.data });
         });
-        
+
         finishScan(data.scan.status);
     } catch (e) { alert(e.message); }
+}
+
+async function deleteScan(id, domain) {
+    const confirmed = confirm(`Delete scan for "${domain}" and all related data?\n\nThis action cannot be undone.`);
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch(`/scan/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            alert('Scan deleted successfully');
+            loadHistory();
+        } else {
+            alert(data.detail || 'Failed to delete scan');
+        }
+    } catch (e) {
+        alert('Error deleting scan: ' + e.message);
+    }
 }
 
 function doExport(f) {
