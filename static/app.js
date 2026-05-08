@@ -588,6 +588,7 @@ function showScanCompleteModal(status) {
     const icon = $('scanCompleteIcon');
     const title = $('scanCompleteTitle');
     const message = $('scanCompleteMessage');
+    const btn = $('scanCompleteBtn');
 
     if (!modal) return;
 
@@ -595,44 +596,76 @@ function showScanCompleteModal(status) {
         icon.textContent = '✓';
         icon.classList.remove('error');
         title.textContent = 'Scan Completed!';
-        message.textContent = 'Reconnaissance scan has finished successfully. Check the results below.';
+        message.textContent = 'Reconnaissance scan has finished successfully. Click below to view your results.';
+        if (btn) {
+            btn.textContent = 'View Results';
+            btn.style.display = 'block';
+        }
     } else if (status === 'error') {
         icon.textContent = '✕';
         icon.classList.add('error');
         title.textContent = 'Scan Error';
         message.textContent = 'An error occurred during the scan. Check the logs above for details.';
+        if (btn) {
+            btn.textContent = 'Close';
+            btn.onclick = () => closeScanCompleteModal();
+        }
     } else if (status === 'timeout') {
         icon.textContent = '⏱';
         icon.classList.add('error');
         title.textContent = 'Scan Timeout';
         message.textContent = 'The scan took too long and was cancelled. Try with fewer tools or targets.';
+        if (btn) {
+            btn.textContent = 'Close';
+            btn.onclick = () => closeScanCompleteModal();
+        }
     } else if (status === 'cancelled') {
         icon.textContent = '⊗';
         icon.classList.add('error');
         title.textContent = 'Scan Cancelled';
         message.textContent = 'The scan was cancelled by user.';
+        if (btn) {
+            btn.textContent = 'Close';
+            btn.onclick = () => closeScanCompleteModal();
+        }
     }
 
     modal.style.display = 'flex';
 
-    // Auto-scroll to results section
-    setTimeout(() => {
-        const resultsSection = $('resultsSection');
-        if (resultsSection && resultsSection.style.display !== 'none') {
-            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, 500);
+    // Auto-dismiss modal after 8 seconds on completion, show results automatically
+    if (status === 'completed') {
+        setTimeout(() => {
+            viewScanResults();
+        }, 8000);
+    }
 }
 
 function closeScanCompleteModal() {
     const modal = $('scanCompleteModal');
     if (modal) modal.style.display = 'none';
+}
+
+function viewScanResults() {
+    console.log('[viewScanResults] Showing results and closing modal');
+
+    // Close modal
+    closeScanCompleteModal();
+
+    // Ensure results section is visible
+    const resultsSection = $('resultsSection');
+    if (resultsSection) {
+        console.log('[viewScanResults] Setting resultsSection display to flex');
+        resultsSection.style.display = 'flex';
+    }
 
     // Scroll to results
-    const resultsSection = $('resultsSection');
-    if (resultsSection && resultsSection.style.display !== 'none') {
-        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    setTimeout(() => {
+        const resultsSection = $('resultsSection');
+        if (resultsSection) {
+            console.log('[viewScanResults] Scrolling to results section');
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 100);
 }
 
 function clearResults() {
