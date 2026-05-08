@@ -289,7 +289,7 @@ function onPlan(event) {
     const tools = event.tools || [];
     tools.forEach(t => { STATE.store[t] = []; });
     buildResultPanels(tools);
-    $('resultsSection').style.display = 'block';
+    $('resultsSection').style.display = 'flex';
 }
 
 function buildResultPanels(tools) {
