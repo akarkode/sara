@@ -258,6 +258,44 @@ header {
 .tool-chip.active .check-circle { background: var(--blue); border-color: var(--blue); }
 .chip-name { font-size: 13px; font-weight: 700; }
 
+.missing-tag {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--red);
+    text-transform: uppercase;
+    background: #fee2e2;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.tool-chip.missing {
+    opacity: 0.8;
+    cursor: default;
+    border-style: dashed;
+}
+
+.install-btn {
+    margin-top: 4px;
+    padding: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.install-btn:hover:not(:disabled) {
+    background: #1d4ed8;
+}
+
+.install-btn:disabled {
+    background: var(--txt-light);
+    cursor: not-allowed;
+}
+
 .metric-card {
     display: flex;
     flex-direction: column;
@@ -363,6 +401,26 @@ tr:hover td { background: #fafafa; }
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
     overflow: hidden;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 32px;
+    width: 400px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }

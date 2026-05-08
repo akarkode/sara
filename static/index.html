@@ -97,9 +97,13 @@
                                     <div class="metric-lbl">Identified Hosts</div>
                                     <div class="metric-val" id="stat-hosts">0</div>
                                 </div>
-                                <div class="metric-item" style="border-color: var(--yellow);">
+                                <div class="metric-item" style="border-color: var(--yellow); margin-bottom: 12px;">
                                     <div class="metric-lbl">Vulnerabilities / Risks</div>
                                     <div class="metric-val" id="stat-risks">0</div>
+                                </div>
+                                <div class="metric-item" style="border-color: var(--blue);">
+                                    <div class="metric-lbl">System Environment</div>
+                                    <div class="metric-val" id="os-display" style="font-size: 14px; font-weight: 600;">Detecting...</div>
                                 </div>
                             </div>
 
@@ -164,5 +168,20 @@
     </main>
 
     <script src="/static/app.js"></script>
+
+    <!-- Password Modal -->
+    <div id="passwordModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="card-title">Sudo Authentication</div>
+            <p style="font-size: 13px; color: var(--txt-dim); margin-bottom: 20px;">
+                Root/Sudo access is required to install this tool. Please enter your password.
+            </p>
+            <input type="password" id="sudoPassword" class="main-input" style="padding-right: 16px; margin-bottom: 20px;" placeholder="Enter sudo password">
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="nav-item" onclick="closePasswordModal()">Cancel</button>
+                <button class="primary-btn" style="position: static; height: 36px;" id="confirmSudoBtn">Confirm & Install</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

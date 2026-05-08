@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 from db import init_db, create_scan, get_scan, get_scan_results, get_all_scans
 from scanner import (
     validate_domain, run_scan, subscribe, unsubscribe,
-    get_tools_info, resolve_tools, DEFAULT_TOOLS, stop_scan
+    get_tools_info, resolve_tools, DEFAULT_TOOLS, stop_scan,
+    get_os_info, install_tool
 )
 from exporter import export_pdf, export_csv
 
@@ -30,9 +31,34 @@ class ScanRequest(BaseModel):
     tools: list[str] | None = None
     wordlist: str = "default"
 
+@app.get("/os")
+async def os_info():
+    return get_os_info()
+
 @app.get("/tools")
 async def list_tools():
-    return {"tools": get_tools_info(), "defaults": DEFAULT_TOOLS}
+    return {
+        "tools": get_tools_info(),
+        "defaults": DEFAULT_TOOLS,
+        "os": get_os_info()
+    }
+
+class InstallRequest(BaseModel):
+    password: Optional[str] = None
+
+@app.post("/install-tool/{tool_id}")
+async def install_tool_route(tool_id: str, req: InstallRequest):
+    tools = get_tools_info()
+    if tool_id not in tools:
+        raise HTTPException(status_code=404, detail="Tool not found")
+    try:
+        await install_tool(tool_id, password=req.password)
+        return {"status": "success", "message": f"Tool {tool_id} installed successfully"}
+    except Exception as e:
+        msg = str(e)
+        if msg in ["SUDO_PASSWORD_REQUIRED", "INCORRECT_PASSWORD"]:
+            return {"status": "error", "code": msg}
+        raise HTTPException(status_code=500, detail=msg)
 
 @app.post("/scan")
 async def start_scan(req: ScanRequest):
@@ -44,6 +70,8 @@ async def start_scan(req: ScanRequest):
     for t in selected:
         if t not in tools_info:
             raise HTTPException(status_code=400, detail=f"Unknown tool: {t}")
+        if not tools_info[t]["available"]:
+            raise HTTPException(status_code=400, detail=f"Tool {t} is not installed on this system")
     resolved = resolve_tools(selected)
     scan_id  = uuid.uuid4().hex[:12]
     await create_scan(scan_id, domain, resolved, req.wordlist)

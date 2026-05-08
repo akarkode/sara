@@ -3,6 +3,9 @@ import json
 import os
 import re
 import time
+import platform
+import shutil
+import subprocess
 from dotenv import load_dotenv
 from db import insert_result, update_scan_status
 
@@ -17,42 +20,49 @@ TOOLS_INFO = {
         "description": "Domain registration & ownership lookup",
         "depends": [],
         "order": 1,
+        "binary": "whois",
     },
     "dig": {
         "name": "DNS Records",
         "description": "DNS enumeration (A, MX, NS, TXT, CNAME)",
         "depends": [],
         "order": 2,
+        "binary": "dig",
     },
     "httpx": {
         "name": "HTTPX",
         "description": "Subdomain discovery & HTTP probing",
         "depends": [],
         "order": 3,
+        "binary": "httpx",
     },
     "wafw00f": {
         "name": "WAFw00f",
         "description": "Web Application Firewall detection",
         "depends": ["httpx"],
         "order": 4,
+        "binary": "wafw00f",
     },
     "whatweb": {
         "name": "WhatWeb",
         "description": "Web technology fingerprinting",
         "depends": ["httpx"],
         "order": 5,
+        "binary": "whatweb",
     },
     "ffuf": {
         "name": "FFUF",
         "description": "Directory & file fuzzing",
         "depends": ["httpx"],
         "order": 6,
+        "binary": "ffuf",
     },
     "nmap": {
         "name": "Nmap",
         "description": "Port scanning & service detection",
         "depends": [],
         "order": 7,
+        "binary": "nmap",
     },
 }
 
@@ -63,8 +73,124 @@ _queues: dict[str, list[asyncio.Queue]] = {}
 _procs:  dict[str, asyncio.subprocess.Process] = {}
 _tasks:  dict[str, asyncio.Task] = {}
 
+def get_os_info():
+    info = {
+        "system": platform.system(),
+        "release": platform.release(),
+        "machine": platform.machine(),
+        "distro": "",
+    }
+    if info["system"] == "Linux":
+        try:
+            with open("/etc/os-release") as f:
+                lines = f.readlines()
+                for line in lines:
+                    if line.startswith("PRETTY_NAME="):
+                        info["distro"] = line.split("=")[1].strip().strip('"')
+                        break
+        except Exception:
+            pass
+    return info
+
+def is_tool_available(tool_id: str) -> bool:
+    binary = TOOLS_INFO.get(tool_id, {}).get("binary")
+    if not binary:
+        return False
+    return shutil.which(binary) is not None
+
 def get_tools_info() -> dict:
-    return TOOLS_INFO
+    tools = {}
+    for tid, info in TOOLS_INFO.items():
+        tools[tid] = {**info, "available": is_tool_available(tid)}
+    return tools
+
+async def check_permissions():
+    """Checks if we have root or passwordless sudo access."""
+    if os.name == 'nt': # Windows
+        import ctypes
+        return ctypes.windll.shell32.IsUserAnAdmin() != 0
+    
+    # Check if root
+    if os.getuid() == 0:
+        return True
+    
+    # Check if sudo works without password
+    try:
+        proc = await asyncio.create_subprocess_exec("sudo", "-n", "true", stderr=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE)
+        await proc.wait()
+        return proc.returncode == 0
+    except Exception:
+        return False
+
+async def install_tool(tool_id: str, password: str = None):
+    os_info = get_os_info()
+    system = os_info["system"]
+    
+    has_perm = await check_permissions()
+    
+    commands = []
+    if system == "Linux":
+        distro = os_info["distro"].lower()
+        # If password is provided, we use sudo -S to read from stdin
+        sudo_prefix = ["sudo", "-S"] if password else (["sudo", "-n"] if not (os.getuid() == 0 if hasattr(os, 'getuid') else False) else [])
+        
+        if not has_perm and not password and sudo_prefix and "-n" in sudo_prefix:
+            # We don't have passwordless sudo, so we need to tell the frontend to ask for a password
+            raise Exception("SUDO_PASSWORD_REQUIRED")
+
+        if "debian" in distro or "ubuntu" in distro:
+            pkg_map = {
+                "whois": "whois",
+                "dig": "dnsutils",
+                "nmap": "nmap",
+                "whatweb": "whatweb",
+                "wafw00f": "wafw00f",
+                "ffuf": "ffuf",
+                "httpx": "httpx",
+            }
+            pkg = pkg_map.get(tool_id)
+            if pkg:
+                if tool_id == "httpx":
+                    commands = ["/bin/bash", "-c", f"echo '{password}' | {' '.join(sudo_prefix)} apt-get update -y && echo '{password}' | {' '.join(sudo_prefix)} apt-get install -y curl unzip && curl -sL https://github.com/projectdiscovery/httpx/releases/download/v1.6.0/httpx_1.6.0_linux_amd64.zip -o httpx.zip && unzip -o httpx.zip && echo '{password}' | {' '.join(sudo_prefix)} mv httpx /usr/local/bin/ && rm httpx.zip"]
+                else:
+                    commands = [f"echo '{password}' | " + " ".join(sudo_prefix + ["apt-get", "update", "-y"])] + [f"echo '{password}' | " + " ".join(sudo_prefix + ["apt-get", "install", "-y", pkg])]
+        elif "arch" in distro:
+            pkg_map = {
+                "whois": "whois",
+                "dig": "bind",
+                "nmap": "nmap",
+                "whatweb": "whatweb",
+                "wafw00f": "wafw00f",
+                "ffuf": "ffuf",
+                "httpx": "httpx",
+            }
+            pkg = pkg_map.get(tool_id)
+            if pkg:
+                commands = [f"echo '{password}' | " + " ".join(sudo_prefix + ["pacman", "-Sy", "--noconfirm", pkg])]
+    elif system == "Darwin": # macOS
+        # Homebrew doesn't usually want sudo
+        pkg_map = {"whois":"whois","dig":"bind","nmap":"nmap","whatweb":"whatweb","wafw00f":"wafw00f","ffuf":"ffuf","httpx":"projectdiscovery/tap/httpx"}
+        pkg = pkg_map.get(tool_id)
+        if pkg: commands = ["brew", "install", pkg]
+            
+    if not commands:
+        raise Exception(f"Installation not supported for {tool_id} on {system}")
+
+    for cmd in commands:
+        cmd_str = cmd if isinstance(cmd, str) else " ".join([str(c) for c in cmd])
+        proc = await asyncio.create_subprocess_shell(
+            cmd_str,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await proc.communicate()
+        
+        if proc.returncode != 0:
+            err_msg = stderr.decode().strip()
+            if "sudo: a password is required" in err_msg or "sudo: 1 incorrect password attempt" in err_msg:
+                raise Exception("SUDO_PASSWORD_REQUIRED" if not password else "INCORRECT_PASSWORD")
+            raise Exception(f"Installation failed: {err_msg}")
+    return True
 
 async def stop_scan(scan_id: str):
     if scan_id in _tasks:

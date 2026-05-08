@@ -17,30 +17,107 @@ function showView(view) {
     if (view === 'history') loadHistory();
 }
 
+let CURRENT_INSTALL_ID = null;
+
 async function loadTools() {
     try {
         const r = await fetch('/tools');
         const d = await r.json();
         STATE.toolsMeta = d.tools;
+        const os = d.os;
+        
+        // Display OS Info
+        const osText = os.distro || `${os.system} ${os.release}`;
+        $('os-display').textContent = osText;
+        $('os-display').title = `${os.system} ${os.release} (${os.machine})`;
+
         const defs = ['httpx'];
         const grid = $('toolsGrid');
         grid.innerHTML = '';
         
         Object.entries(STATE.toolsMeta).sort((a, b) => a[1].order - b[1].order).forEach(([id, info]) => {
-            if (defs.includes(id)) STATE.selectedTools.add(id);
+            const available = info.available;
+            if (available && defs.includes(id)) STATE.selectedTools.add(id);
+            
             const el = document.createElement('div');
-            el.className = 'tool-chip' + (defs.includes(id) ? ' active' : '');
-            el.onclick = () => { if (!STATE.scanning) toggleTool(id, el); };
+            el.className = 'tool-chip' + (STATE.selectedTools.has(id) ? ' active' : '') + (!available ? ' missing' : '');
+            el.onclick = () => { if (!STATE.scanning && available) toggleTool(id, el); };
+            
             el.innerHTML = `
                 <div class="chip-header">
                     <span class="chip-name">${info.name || id}</span>
-                    <div class="check-circle"></div>
+                    ${available ? '<div class="check-circle"></div>' : '<span class="missing-tag">Missing</span>'}
                 </div>
+                ${!available ? `<button class="install-btn" data-id="${id}" onclick="event.stopPropagation(); installTool('${id}', this)">Install</button>` : ''}
             `;
             grid.appendChild(el);
         });
     } catch (e) { console.error('Failed to load tools:', e); }
 }
+
+async function installTool(id, btn, password = null) {
+    if (!btn) btn = document.querySelector(`.install-btn[data-id="${id}"]`);
+    const originalText = btn ? btn.textContent : 'Install';
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Installing...';
+    }
+    
+    try {
+        const res = await fetch(`/install-tool/${id}`, { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password })
+        });
+        const data = await res.json();
+        
+        if (data.status === 'success') {
+            logTerminal(`<b style="color:var(--green)">Tool ${id} installed successfully.</b>`);
+            closePasswordModal();
+            loadTools(); 
+        } else if (data.code === 'SUDO_PASSWORD_REQUIRED' || data.code === 'INCORRECT_PASSWORD') {
+            if (data.code === 'INCORRECT_PASSWORD') alert('Incorrect password, please try again.');
+            CURRENT_INSTALL_ID = id;
+            showPasswordModal();
+            if (btn) {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        } else {
+            alert(data.detail || 'Installation failed');
+            if (btn) {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+    } catch (e) {
+        alert(e.message);
+        if (btn) {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
+}
+
+function showPasswordModal() {
+    $('passwordModal').style.display = 'flex';
+    $('sudoPassword').value = '';
+    $('sudoPassword').focus();
+}
+
+function closePasswordModal() {
+    $('passwordModal').style.display = 'none';
+}
+
+$('confirmSudoBtn').onclick = () => {
+    const pw = $('sudoPassword').value;
+    if (!pw) return alert('Password required');
+    installTool(CURRENT_INSTALL_ID, null, pw);
+};
+
+$('sudoPassword').onkeyup = e => {
+    if (e.key === 'Enter') $('confirmSudoBtn').click();
+};
 
 function toggleTool(id, el) {
     if (STATE.selectedTools.has(id)) {
