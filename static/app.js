@@ -8,6 +8,11 @@ const STATE = {
 };
 
 const $ = id => document.getElementById(id);
+
+// Set current year in footer
+const footerYear = document.getElementById('footerYear');
+if (footerYear) footerYear.textContent = new Date().getFullYear();
+
 console.log('[APP] STATE and utilities initialized');
 
 function showView(view) {
@@ -694,22 +699,59 @@ async function viewScan(id) {
     } catch (e) { alert(e.message); }
 }
 
-async function deleteScan(id, domain) {
-    const confirmed = confirm(`Delete scan for "${domain}" and all related data?\n\nThis action cannot be undone.`);
-    if (!confirmed) return;
+let PENDING_DELETE = { id: null, domain: null };
+
+function deleteScan(id, domain) {
+    PENDING_DELETE = { id, domain };
+    const modal = $('deleteModal');
+    const text = $('deleteModalText');
+    const confirmBtn = $('deleteConfirmBtn');
+
+    if (text) {
+        text.textContent = `Delete scan for "${domain}" and all related data?\n\nThis action cannot be undone and all results will be permanently removed.`;
+    }
+
+    if (modal) modal.style.display = 'flex';
+    if (confirmBtn) confirmBtn.disabled = false;
+}
+
+function closeDeleteModal() {
+    const modal = $('deleteModal');
+    if (modal) modal.style.display = 'none';
+    PENDING_DELETE = { id: null, domain: null };
+}
+
+async function confirmDelete() {
+    const { id, domain } = PENDING_DELETE;
+    if (!id) return;
+
+    const confirmBtn = $('deleteConfirmBtn');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Deleting...';
+    }
 
     try {
         const res = await fetch(`/scan/${id}`, { method: 'DELETE' });
         const data = await res.json();
 
         if (data.status === 'success') {
-            alert('Scan deleted successfully');
+            closeDeleteModal();
+            alert(`✓ Scan for "${domain}" has been deleted successfully.`);
             loadHistory();
         } else {
-            alert(data.detail || 'Failed to delete scan');
+            alert('✗ Failed to delete scan: ' + (data.detail || 'Unknown error'));
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Delete';
+            }
         }
     } catch (e) {
-        alert('Error deleting scan: ' + e.message);
+        alert('✗ Error deleting scan: ' + e.message);
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Delete';
+        }
     }
 }
 

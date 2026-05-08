@@ -118,8 +118,10 @@ aside {
 }
 
 .side-footer {
-    padding: 20px 24px;
+    padding: 16px 24px;
     border-top: 1px solid var(--border);
+    background: linear-gradient(to bottom, transparent, rgba(37, 99, 235, 0.02));
+    text-align: center;
 }
 
 main {
@@ -368,8 +370,8 @@ header {
     border-radius: var(--r-lg);
     padding: 20px;
     box-shadow: var(--shadow);
-    min-height: 250px;
-    max-height: 450px;
+    min-height: 300px;
+    max-height: none;
     flex-direction: column;
     overflow-y: auto;
 }
@@ -799,4 +801,86 @@ tr:hover td { background: #fafafa; }
 .scan-complete-btn:hover {
     background: #1d4ed8;
     box-shadow: 0 4px 12px var(--blue-glow);
+}
+
+/* Delete Confirmation Modal */
+.delete-modal {
+    width: 380px;
+    padding: 0 !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.delete-modal-header {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.delete-modal-header svg {
+    color: var(--red);
+    flex-shrink: 0;
+}
+
+.delete-modal-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--txt-main);
+    margin: 0;
+}
+
+.delete-modal > p {
+    padding: 24px 24px 0 24px;
+    font-size: 14px;
+    color: var(--txt-dim);
+    margin: 0 0 20px 0;
+    line-height: 1.6;
+}
+
+.delete-modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding: 0 24px 24px 24px;
+}
+
+.delete-btn-cancel,
+.delete-btn-confirm {
+    padding: 8px 16px;
+    border-radius: var(--r-sm);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    transition: var(--transition);
+}
+
+.delete-btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--txt-dim);
+}
+
+.delete-btn-cancel:hover {
+    background: var(--surface-alt);
+    color: var(--txt-main);
+}
+
+.delete-btn-confirm {
+    background: var(--red);
+    color: #fff;
+}
+
+.delete-btn-confirm:hover {
+    background: #dc2626;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.delete-btn-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
