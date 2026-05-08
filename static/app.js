@@ -573,6 +573,61 @@ function finishScan(status) {
     logTerminal(`Scan finished with status: <b style="color:${status==='completed'?'var(--green)':'var(--red)'}">${status.toUpperCase()}</b>`);
     $('expPdf').disabled = status !== 'completed';
     $('expCsv').disabled = status !== 'completed';
+
+    // Show scan complete notification
+    showScanCompleteModal(status);
+}
+
+function showScanCompleteModal(status) {
+    const modal = $('scanCompleteModal');
+    const icon = $('scanCompleteIcon');
+    const title = $('scanCompleteTitle');
+    const message = $('scanCompleteMessage');
+
+    if (!modal) return;
+
+    if (status === 'completed') {
+        icon.textContent = '✓';
+        icon.classList.remove('error');
+        title.textContent = 'Scan Completed!';
+        message.textContent = 'Reconnaissance scan has finished successfully. Check the results below.';
+    } else if (status === 'error') {
+        icon.textContent = '✕';
+        icon.classList.add('error');
+        title.textContent = 'Scan Error';
+        message.textContent = 'An error occurred during the scan. Check the logs above for details.';
+    } else if (status === 'timeout') {
+        icon.textContent = '⏱';
+        icon.classList.add('error');
+        title.textContent = 'Scan Timeout';
+        message.textContent = 'The scan took too long and was cancelled. Try with fewer tools or targets.';
+    } else if (status === 'cancelled') {
+        icon.textContent = '⊗';
+        icon.classList.add('error');
+        title.textContent = 'Scan Cancelled';
+        message.textContent = 'The scan was cancelled by user.';
+    }
+
+    modal.style.display = 'flex';
+
+    // Auto-scroll to results section
+    setTimeout(() => {
+        const resultsSection = $('resultsSection');
+        if (resultsSection && resultsSection.style.display !== 'none') {
+            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 500);
+}
+
+function closeScanCompleteModal() {
+    const modal = $('scanCompleteModal');
+    if (modal) modal.style.display = 'none';
+
+    // Scroll to results
+    const resultsSection = $('resultsSection');
+    if (resultsSection && resultsSection.style.display !== 'none') {
+        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 function clearResults() {

@@ -710,3 +710,93 @@ tr:hover td { background: #fafafa; }
     background: var(--txt-light);
     cursor: not-allowed;
 }
+
+/* Scan Complete Notification */
+.scan-complete-card {
+    background: var(--surface);
+    border-radius: var(--r-lg);
+    padding: 40px 32px;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    max-width: 400px;
+    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.scan-complete-icon {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--green), #059669);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    color: #fff;
+    margin: 0 auto 16px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    animation: scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleIn {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.scan-complete-icon.error {
+    background: linear-gradient(135deg, var(--red), #dc2626);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.scan-complete-icon.error::after {
+    content: '✕';
+}
+
+.scan-complete-card h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--txt-main);
+    margin-bottom: 8px;
+    letter-spacing: -0.2px;
+}
+
+.scan-complete-card p {
+    font-size: 14px;
+    color: var(--txt-dim);
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+
+.scan-complete-btn {
+    padding: 10px 24px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: var(--r-sm);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.scan-complete-btn:hover {
+    background: #1d4ed8;
+    box-shadow: 0 4px 12px var(--blue-glow);
+}
