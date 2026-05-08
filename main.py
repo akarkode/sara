@@ -11,7 +11,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from db import init_db, create_scan, get_scan, get_scan_results, get_all_scans, DB_PATH
 from scanner import (
-    validate_domain, run_scan, subscribe, unsubscribe,
+    validate_domain, classify_target, run_scan, subscribe, unsubscribe,
     get_tools_info, resolve_tools, DEFAULT_TOOLS, stop_scan,
     get_os_info, install_tool
 )
@@ -62,9 +62,11 @@ async def install_tool_route(tool_id: str, req: InstallRequest):
 
 @app.post("/scan")
 async def start_scan(req: ScanRequest):
-    domain = req.domain.strip().lower()
-    if not validate_domain(domain):
-        raise HTTPException(status_code=400, detail="Invalid domain format")
+    target = req.domain.strip().lower()
+    target_type = classify_target(target)
+    if target_type == "invalid":
+        raise HTTPException(status_code=400, detail="Invalid target: must be a domain (example.com), URL (https://example.com), or IP address (1.2.3.4)")
+
     selected = req.tools or DEFAULT_TOOLS
     tools_info = get_tools_info()
     for t in selected:
@@ -73,10 +75,14 @@ async def start_scan(req: ScanRequest):
         if not tools_info[t]["available"]:
             raise HTTPException(status_code=400, detail=f"Tool {t} is not installed on this system")
     resolved = resolve_tools(selected)
-    scan_id  = uuid.uuid4().hex[:12]
-    await create_scan(scan_id, domain, resolved, req.wordlist)
-    asyncio.create_task(run_scan(scan_id, domain, selected, req.wordlist))
-    return {"scan_id": scan_id, "domain": domain, "status": "queued", "tools": resolved}
+    for t in resolved:
+        if not tools_info[t]["available"]:
+            raise HTTPException(status_code=400, detail=f"Required dependency '{t}' is not installed (needed by selected tools)")
+
+    scan_id = uuid.uuid4().hex[:12]
+    await create_scan(scan_id, target, resolved, req.wordlist)
+    asyncio.create_task(run_scan(scan_id, target, selected, req.wordlist, target_type=target_type))
+    return {"scan_id": scan_id, "domain": target, "status": "queued", "tools": resolved, "target_type": target_type}
 
 @app.post("/scan/{scan_id}/stop")
 async def stop_scan_route(scan_id: str):

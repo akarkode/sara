@@ -516,10 +516,11 @@ function renderRow(tool, data) {
     if (!tbody) return;
 
     const toolHeaders = {
-        'httpx': ['url', 'status_code', 'title', 'tech'],
-        'nmap': ['port', 'protocol', 'service', 'version'],
-        'dig': ['type', 'name', 'value'],
-        'ffuf': ['path', 'status_code', 'size']
+        'httpx':        ['url', 'status_code', 'title', 'tech'],
+        'nmap':         ['port', 'protocol', 'service', 'version'],
+        'dig':          ['type', 'name', 'value'],
+        'ffuf':         ['path', 'status_code', 'size'],
+        'react2shell':  ['url', 'status', 'http_code', 'detail'],
     };
 
     if (thead.innerHTML === '') {
@@ -539,6 +540,17 @@ function renderRow(tool, data) {
             if (sc >= 200 && sc < 300) color = 'b-2xx';
             else if (sc >= 300 && sc < 400) color = 'b-3xx';
             else if (sc >= 500) color = 'b-5xx';
+            return `<td><span class="badge ${color}">${val}</span></td>`;
+        }
+
+        if (h === 'status' && tool === 'react2shell') {
+            const statusBadge = {
+                'VULNERABLE': 'b-5xx', 'EXPOSED': 'b-5xx',
+                'SUSPICIOUS': 'b-4xx', 'BLOCKED': 'b-4xx', 'ERROR': 'b-4xx',
+                'FILTERED': 'b-3xx', 'INFO': 'b-3xx',
+                'SAFE': 'b-2xx',
+            };
+            const color = statusBadge[val] || 'b-4xx';
             return `<td><span class="badge ${color}">${val}</span></td>`;
         }
         
@@ -570,6 +582,10 @@ function updateGlobalStats(tool, data) {
         $('stat-hosts').textContent = STATE.stats.liveHosts;
     }
     if (data.status_code && parseInt(data.status_code) >= 400) {
+        STATE.stats.risks++;
+        $('stat-risks').textContent = STATE.stats.risks;
+    }
+    if (tool === 'react2shell' && ['VULNERABLE', 'EXPOSED', 'SUSPICIOUS'].includes(data.status)) {
         STATE.stats.risks++;
         $('stat-risks').textContent = STATE.stats.risks;
     }

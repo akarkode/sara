@@ -133,6 +133,8 @@ async def check_permissions():
         return False
 
 async def install_tool(tool_id: str, password: str = None):
+    if TOOLS_INFO.get(tool_id, {}).get("python"):
+        raise Exception(f"{tool_id} is a built-in Python module and does not require installation")
     os_info = get_os_info()
     system = os_info["system"]
     
@@ -231,6 +233,25 @@ def resolve_tools(selected: list[str]) -> list[str]:
 def validate_domain(domain: str) -> bool:
     pattern = r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$"
     return bool(re.match(pattern, domain)) and len(domain) <= 253
+
+def validate_url(target: str) -> bool:
+    pattern = r"^https?://[^\s/$.?#].[^\s]*$"
+    return bool(re.match(pattern, target))
+
+def validate_ip(target: str) -> bool:
+    pattern = r"^(\d{1,3}\.){3}\d{1,3}$"
+    if not re.match(pattern, target):
+        return False
+    return all(0 <= int(p) <= 255 for p in target.split("."))
+
+def classify_target(target: str) -> str:
+    if validate_domain(target):
+        return "domain"
+    if validate_url(target):
+        return "url"
+    if validate_ip(target):
+        return "ip"
+    return "invalid"
 
 async def _broadcast(scan_id: str, event: dict):
     if scan_id in _queues:
@@ -389,10 +410,9 @@ def _parse_nmap(line: str) -> tuple[str, dict]:
             return line, {"host": m2.group(1), "ip": (m2.group(2) or "").strip()}
     return line, {}
 
-async def run_scan(scan_id: str, domain: str, selected_tools: list[str], wordlist: str = "default"):
-    # Register this task
+async def run_scan(scan_id: str, domain: str, selected_tools: list[str], wordlist: str = "default", target_type: str = "domain"):
     _tasks[scan_id] = asyncio.current_task()
-    
+
     async with _lock:
         try:
             await update_scan_status(scan_id, "running")
@@ -403,7 +423,9 @@ async def run_scan(scan_id: str, domain: str, selected_tools: list[str], wordlis
             def time_left() -> float:
                 return max(60.0, TIMEOUT - (time.time() - t0))
             wl  = WORDLIST if wordlist == "default" else wordlist
-            ctx = {"domain": domain, "subdomains": [], "live_hosts": [], "sub_file": None}
+
+            seed_url = domain if target_type == "url" else (f"http://{domain}" if target_type == "ip" else None)
+            ctx = {"domain": domain, "subdomains": [], "live_hosts": [seed_url] if seed_url else [], "sub_file": None}
             
             for tool in plan:
                 if tool == "httpx":
