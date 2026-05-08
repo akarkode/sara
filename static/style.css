@@ -371,9 +371,14 @@ header {
     padding: 20px;
     box-shadow: var(--shadow);
     min-height: 300px;
-    max-height: none;
-    flex-direction: column;
-    overflow-y: auto;
+}
+
+.results-container.visible {
+    display: block !important;
+}
+
+.results-container .findings-scroll {
+    display: block !important;
 }
 
 .results-container::-webkit-scrollbar {
@@ -394,10 +399,7 @@ header {
 }
 
 .findings-scroll {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    display: block;
 }
 
 .panel {

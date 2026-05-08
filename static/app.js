@@ -460,8 +460,12 @@ function onPlan(event) {
     const tools = event.tools || [];
     tools.forEach(t => { STATE.store[t] = []; });
     buildResultPanels(tools);
-    $('resultsSection').style.display = 'flex';
-    $('resultsSection').style.flexDirection = 'column';
+    const resultsSection = $('resultsSection');
+    if (resultsSection) {
+        resultsSection.classList.add('visible');
+        resultsSection.style.removeProperty('display');
+    }
+    console.log('[onPlan] Results section made visible, panels:', tools.length);
 }
 
 function buildResultPanels(tools) {
@@ -572,12 +576,21 @@ function updateGlobalStats(tool, data) {
 }
 
 function finishScan(status) {
+    console.log('[finishScan] Status:', status);
     setScanUI(false);
     clearInterval(STATE.timerInterval);
     if (status === 'completed') $('progressBar').style.width = '100%';
     logTerminal(`Scan finished with status: <b style="color:${status==='completed'?'var(--green)':'var(--red)'}">${status.toUpperCase()}</b>`);
     $('expPdf').disabled = status !== 'completed';
     $('expCsv').disabled = status !== 'completed';
+
+    // Ensure results section is visible if there are results
+    const resultsSection = $('resultsSection');
+    if (resultsSection && Object.keys(STATE.store).length > 0) {
+        console.log('[finishScan] Ensuring results section is visible. Tools in store:', Object.keys(STATE.store));
+        resultsSection.classList.add('visible');
+        resultsSection.style.removeProperty('display');
+    }
 
     // Show scan complete notification
     showScanCompleteModal(status);
@@ -631,13 +644,6 @@ function showScanCompleteModal(status) {
     }
 
     modal.style.display = 'flex';
-
-    // Auto-dismiss modal after 8 seconds on completion, show results automatically
-    if (status === 'completed') {
-        setTimeout(() => {
-            viewScanResults();
-        }, 8000);
-    }
 }
 
 function closeScanCompleteModal() {
@@ -654,18 +660,35 @@ function viewScanResults() {
     // Ensure results section is visible
     const resultsSection = $('resultsSection');
     if (resultsSection) {
-        console.log('[viewScanResults] Setting resultsSection display to flex');
-        resultsSection.style.display = 'flex';
+        console.log('[viewScanResults] Adding visible class to resultsSection');
+        resultsSection.classList.add('visible');
+        // Remove inline display style to avoid conflicts
+        resultsSection.style.removeProperty('display');
+
+        // Debug: check if there's content
+        const panels = resultsSection.querySelectorAll('.panel');
+        console.log('[viewScanResults] Number of panels found:', panels.length);
+        let totalRows = 0;
+        panels.forEach((panel, i) => {
+            const tbody = panel.querySelector('tbody');
+            const rowCount = tbody ? tbody.children.length : 0;
+            totalRows += rowCount;
+            console.log(`[viewScanResults] Panel ${i}:`, panel.id, 'rows:', rowCount);
+        });
+        console.log('[viewScanResults] Total rows across all panels:', totalRows);
+        console.log('[viewScanResults] STATE.store keys:', Object.keys(STATE.store));
     }
 
-    // Scroll to results
+    // Scroll to results - use content-scroll container
     setTimeout(() => {
-        const resultsSection = $('resultsSection');
-        if (resultsSection) {
-            console.log('[viewScanResults] Scrolling to results section');
-            resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const rs = $('resultsSection');
+        const contentScroll = document.querySelector('.content-scroll');
+        if (rs && contentScroll) {
+            const offsetTop = rs.offsetTop - 20;
+            console.log('[viewScanResults] Scrolling content-scroll to:', offsetTop);
+            contentScroll.scrollTo({ top: offsetTop, behavior: 'smooth' });
         }
-    }, 100);
+    }, 150);
 }
 
 function clearResults() {
@@ -677,7 +700,11 @@ function clearResults() {
     $('resultPanels').innerHTML = '';
     $('terminalBody').innerHTML = '';
     $('terminalSection').style.display = 'none';
-    $('resultsSection').style.display = 'none';
+    const resultsSection = $('resultsSection');
+    if (resultsSection) {
+        resultsSection.classList.remove('visible');
+        resultsSection.style.removeProperty('display');
+    }
     $('globalSearch').value = '';
 }
 
