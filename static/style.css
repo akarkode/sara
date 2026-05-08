@@ -153,35 +153,17 @@ header {
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1fr 320px;
+    grid-template-columns: 1fr 300px;
     gap: 24px;
     max-width: 1400px;
     margin: 0 auto;
-    height: calc(100vh - 128px);
 }
 
 .main-column {
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
-    padding-right: 8px;
-}
-
-.main-column::-webkit-scrollbar {
-    width: 6px;
-}
-
-.main-column::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.main-column::-webkit-scrollbar-thumb {
-    background: var(--border-hover);
-    border-radius: 3px;
-}
-
-.main-column::-webkit-scrollbar-thumb:hover {
-    background: var(--txt-light);
+    gap: 24px;
+    min-height: 0;
 }
 
 .card {
@@ -324,18 +306,13 @@ header {
 .side-column {
     display: flex;
     flex-direction: column;
-    gap: 0;
-    height: 100%;
-    overflow: hidden;
+    gap: 16px;
 }
 
 .metric-card {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    flex-shrink: 0;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border);
 }
 
 .metric-item {
@@ -386,44 +363,39 @@ header {
 
 .results-container {
     display: none;
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
+    padding: 20px;
     box-shadow: var(--shadow);
-}
-
-.results-container.active {
-    display: flex;
+    min-height: 250px;
+    max-height: 450px;
     flex-direction: column;
-}
-
-.findings-scroll {
-    flex: 1;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-right: 4px;
 }
 
-.findings-scroll::-webkit-scrollbar {
+.results-container::-webkit-scrollbar {
     width: 6px;
 }
 
-.findings-scroll::-webkit-scrollbar-track {
+.results-container::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.findings-scroll::-webkit-scrollbar-thumb {
+.results-container::-webkit-scrollbar-thumb {
     background: var(--border-hover);
     border-radius: 3px;
 }
 
-.findings-scroll::-webkit-scrollbar-thumb:hover {
+.results-container::-webkit-scrollbar-thumb:hover {
     background: var(--txt-light);
+}
+
+.findings-scroll {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .panel {

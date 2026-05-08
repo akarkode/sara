@@ -70,7 +70,7 @@
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <div class="card-title" style="margin-top: 32px;">Enabled Sub-Engines</div>
                             <div class="tools-grid" id="toolsGrid"></div>
                         </div>
@@ -78,6 +78,21 @@
                         <div class="terminal-wrap" id="terminalSection">
                             <div class="card-title">Live Execution Log</div>
                             <div class="terminal" id="terminalBody">Initializing Argus engine...</div>
+                        </div>
+
+                        <div class="results-container" id="resultsSection">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px;">
+                                <div class="card-title" style="margin-bottom: 0;">Discovery Findings</div>
+                                <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                    <button class="nav-item" id="expPdf" onclick="doExport('pdf')" disabled style="padding: 4px 8px; font-size: 11px;">PDF</button>
+                                    <button class="nav-item" id="expCsv" onclick="doExport('csv')" disabled style="padding: 4px 8px; font-size: 11px;">CSV</button>
+                                </div>
+                            </div>
+                            <div style="position: relative; margin-bottom: 12px;">
+                                <input type="text" id="globalSearch" placeholder="Filter..." oninput="filterResults()" style="height: 32px; padding: 0 12px 0 32px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; width: 100%;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 10px; top: 9px; color: var(--txt-light);"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                            </div>
+                            <div id="resultPanels" class="findings-scroll"></div>
                         </div>
                     </section>
 
@@ -121,21 +136,6 @@
                                     </label>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="results-container" id="resultsSection">
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px;">
-                                <div class="card-title" style="margin-bottom: 0;">Discovery Findings</div>
-                                <div style="display: flex; gap: 8px; flex-shrink: 0;">
-                                    <button class="nav-item" id="expPdf" onclick="doExport('pdf')" disabled style="padding: 4px 8px; font-size: 11px;">PDF</button>
-                                    <button class="nav-item" id="expCsv" onclick="doExport('csv')" disabled style="padding: 4px 8px; font-size: 11px;">CSV</button>
-                                </div>
-                            </div>
-                            <div style="position: relative; margin-bottom: 12px;">
-                                <input type="text" id="globalSearch" placeholder="Filter..." oninput="filterResults()" style="height: 32px; padding: 0 12px 0 32px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; width: 100%;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="position: absolute; left: 10px; top: 9px; color: var(--txt-light);"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                            </div>
-                            <div id="resultPanels" class="findings-scroll"></div>
                         </div>
                     </aside>
                 </div>

@@ -22,27 +22,37 @@ let CURRENT_INSTALL_ID = null;
 async function loadTools() {
     try {
         const r = await fetch('/tools');
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+
         const d = await r.json();
+        if (!d.tools || !d.os) throw new Error('Invalid response structure');
+
         STATE.toolsMeta = d.tools;
         const os = d.os;
-        
+
         // Display OS Info
-        const osText = os.distro || `${os.system} ${os.release}`;
-        $('os-display').textContent = osText;
-        $('os-display').title = `${os.system} ${os.release} (${os.machine})`;
+        const osDisplay = $('os-display');
+        if (osDisplay) {
+            const osText = os.distro || `${os.system} ${os.release}`;
+            osDisplay.textContent = osText;
+            osDisplay.title = `${os.system} ${os.release} (${os.machine})`;
+        }
 
         const defs = ['httpx'];
         const grid = $('toolsGrid');
+        if (!grid) throw new Error('toolsGrid element not found');
+
         grid.innerHTML = '';
-        
-        Object.entries(STATE.toolsMeta).sort((a, b) => a[1].order - b[1].order).forEach(([id, info]) => {
+
+        const sortedTools = Object.entries(STATE.toolsMeta).sort((a, b) => a[1].order - b[1].order);
+        sortedTools.forEach(([id, info]) => {
             const available = info.available;
             if (available && defs.includes(id)) STATE.selectedTools.add(id);
-            
+
             const el = document.createElement('div');
             el.className = 'tool-chip' + (STATE.selectedTools.has(id) ? ' active' : '') + (!available ? ' missing' : '');
             el.onclick = () => { if (!STATE.scanning && available) toggleTool(id, el); };
-            
+
             el.innerHTML = `
                 <div class="chip-header">
                     <span class="chip-name">${info.name || id}</span>
@@ -52,7 +62,11 @@ async function loadTools() {
             `;
             grid.appendChild(el);
         });
-    } catch (e) { console.error('Failed to load tools:', e); }
+    } catch (e) {
+        console.error('Failed to load tools:', e);
+        const osDisplay = $('os-display');
+        if (osDisplay) osDisplay.textContent = 'Error loading tools';
+    }
 }
 
 async function installTool(id, btn, password = null) {
@@ -290,6 +304,7 @@ function onPlan(event) {
     tools.forEach(t => { STATE.store[t] = []; });
     buildResultPanels(tools);
     $('resultsSection').style.display = 'flex';
+    $('resultsSection').style.flexDirection = 'column';
 }
 
 function buildResultPanels(tools) {
