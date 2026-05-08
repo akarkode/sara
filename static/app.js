@@ -22,8 +22,61 @@ function showView(view) {
 
 let CURRENT_INSTALL_ID = null;
 
+function addSetupLog(message, isDone = false) {
+    const logsContainer = $('setupLogs');
+    if (!logsContainer) return;
+
+    const logItem = document.createElement('div');
+    logItem.className = 'setup-log-item' + (isDone ? ' done' : '');
+    logItem.innerHTML = `
+        ${!isDone ? '<div class="setup-log-spinner"></div>' : ''}
+        <span>${message}</span>
+    `;
+    logsContainer.appendChild(logItem);
+    logsContainer.scrollTop = logsContainer.scrollHeight;
+}
+
+function showSetupTools() {
+    const setupTools = $('setupTools');
+    if (setupTools) setupTools.style.display = 'block';
+
+    const grid = $('setupToolsGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+    const sortedTools = Object.entries(STATE.toolsMeta).sort((a, b) => a[1].order - b[1].order);
+
+    sortedTools.forEach(([id, info]) => {
+        const item = document.createElement('div');
+        item.className = `setup-tool-item ${info.available ? 'available' : 'missing'}`;
+        item.innerHTML = info.available ? `✓ ${info.name}` : `✗ ${info.name}`;
+        grid.appendChild(item);
+    });
+
+    // Show install area if there are missing tools
+    const missingTools = sortedTools.filter(([, info]) => !info.available);
+    if (missingTools.length > 0) {
+        const installArea = $('setupInstallArea');
+        if (installArea) installArea.style.display = 'block';
+
+        const installButtons = $('setupInstallButtons');
+        if (installButtons) {
+            installButtons.innerHTML = '';
+            missingTools.forEach(([id, info]) => {
+                const btn = document.createElement('button');
+                btn.className = 'setup-install-btn';
+                btn.textContent = `Install ${info.name}`;
+                btn.onclick = () => installTool(id, btn);
+                installButtons.appendChild(btn);
+            });
+        }
+    }
+}
+
 async function loadTools() {
     console.log('[loadTools] Starting tool initialization...');
+    addSetupLog('Fetching environment information...');
+
     try {
         console.log('[loadTools] Fetching /tools endpoint...');
         const r = await fetch('/tools');
@@ -40,7 +93,9 @@ async function loadTools() {
         const os = d.os;
         console.log('[loadTools] OS Info:', os);
 
-        // Display OS Info
+        addSetupLog('Detected: ' + (os.distro || `${os.system} ${os.release}`), true);
+
+        // Display OS Info in main page
         const osDisplay = $('os-display');
         if (osDisplay) {
             const osText = os.distro || `${os.system} ${os.release}`;
@@ -50,6 +105,8 @@ async function loadTools() {
         } else {
             console.warn('[loadTools] os-display element not found');
         }
+
+        addSetupLog('Checking installed tools...', true);
 
         const defs = ['httpx'];
         const grid = $('toolsGrid');
@@ -78,12 +135,34 @@ async function loadTools() {
             `;
             grid.appendChild(el);
         });
+
+        // Show tools in setup card
+        showSetupTools();
+        addSetupLog('Setup complete! Ready to scan.', true);
+
+        // Show footer buttons
+        const skipBtn = $('setupSkipBtn');
+        const readyBtn = $('setupReadyBtn');
+        if (skipBtn) skipBtn.style.display = 'block';
+        if (readyBtn) readyBtn.style.display = 'block';
+
         console.log('[loadTools] Tools loaded successfully');
     } catch (e) {
         console.error('[loadTools] Error:', e.message, e);
+        addSetupLog('Error: ' + e.message);
         const osDisplay = $('os-display');
         if (osDisplay) osDisplay.textContent = 'Error: ' + e.message;
     }
+}
+
+function skipSetup() {
+    const overlay = $('setupOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function completeSetup() {
+    const overlay = $('setupOverlay');
+    if (overlay) overlay.style.display = 'none';
 }
 
 async function installTool(id, btn, password = null) {
@@ -140,15 +219,26 @@ function closePasswordModal() {
     $('passwordModal').style.display = 'none';
 }
 
-$('confirmSudoBtn').onclick = () => {
-    const pw = $('sudoPassword').value;
-    if (!pw) return alert('Password required');
-    installTool(CURRENT_INSTALL_ID, null, pw);
-};
+function setupEventHandlers() {
+    const confirmBtn = $('confirmSudoBtn');
+    if (confirmBtn) {
+        confirmBtn.onclick = () => {
+            const pw = $('sudoPassword').value;
+            if (!pw) return alert('Password required');
+            installTool(CURRENT_INSTALL_ID, null, pw);
+        };
+    }
 
-$('sudoPassword').onkeyup = e => {
-    if (e.key === 'Enter') $('confirmSudoBtn').click();
-};
+    const pwInput = $('sudoPassword');
+    if (pwInput) {
+        pwInput.onkeyup = e => {
+            if (e.key === 'Enter') {
+                const btn = $('confirmSudoBtn');
+                if (btn) btn.click();
+            }
+        };
+    }
+}
 
 function toggleTool(id, el) {
     if (STATE.selectedTools.has(id)) {
@@ -510,9 +600,16 @@ function togglePanel(tool) {
 }
 
 function initializeTools() {
+    console.log('[APP] initializeTools called, readyState:', document.readyState);
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadTools);
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('[APP] DOMContentLoaded fired');
+            setupEventHandlers();
+            loadTools();
+        });
     } else {
+        console.log('[APP] Document already loaded, calling setup functions directly');
+        setupEventHandlers();
         loadTools();
     }
 }
