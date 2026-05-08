@@ -1,3 +1,5 @@
+console.log('[APP] Script loaded, initializing STATE...');
+
 const STATE = {
     scanning: false, scanId: null, domain: null, timerStart: 0, timerInterval: null, eventSource: null,
     selectedTools: new Set(), toolsMeta: {}, wordlistMode: 'default', store: {},
@@ -6,6 +8,7 @@ const STATE = {
 };
 
 const $ = id => document.getElementById(id);
+console.log('[APP] STATE and utilities initialized');
 
 function showView(view) {
     STATE.currentView = view;
@@ -20,31 +23,44 @@ function showView(view) {
 let CURRENT_INSTALL_ID = null;
 
 async function loadTools() {
+    console.log('[loadTools] Starting tool initialization...');
     try {
+        console.log('[loadTools] Fetching /tools endpoint...');
         const r = await fetch('/tools');
+        console.log('[loadTools] Response status:', r.status);
+
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
 
         const d = await r.json();
+        console.log('[loadTools] Received data:', d);
+
         if (!d.tools || !d.os) throw new Error('Invalid response structure');
 
         STATE.toolsMeta = d.tools;
         const os = d.os;
+        console.log('[loadTools] OS Info:', os);
 
         // Display OS Info
         const osDisplay = $('os-display');
         if (osDisplay) {
             const osText = os.distro || `${os.system} ${os.release}`;
+            console.log('[loadTools] Setting OS display to:', osText);
             osDisplay.textContent = osText;
             osDisplay.title = `${os.system} ${os.release} (${os.machine})`;
+        } else {
+            console.warn('[loadTools] os-display element not found');
         }
 
         const defs = ['httpx'];
         const grid = $('toolsGrid');
         if (!grid) throw new Error('toolsGrid element not found');
 
+        console.log('[loadTools] Clearing grid and populating tools...');
         grid.innerHTML = '';
 
         const sortedTools = Object.entries(STATE.toolsMeta).sort((a, b) => a[1].order - b[1].order);
+        console.log('[loadTools] Sorted tools count:', sortedTools.length);
+
         sortedTools.forEach(([id, info]) => {
             const available = info.available;
             if (available && defs.includes(id)) STATE.selectedTools.add(id);
@@ -62,10 +78,11 @@ async function loadTools() {
             `;
             grid.appendChild(el);
         });
+        console.log('[loadTools] Tools loaded successfully');
     } catch (e) {
-        console.error('Failed to load tools:', e);
+        console.error('[loadTools] Error:', e.message, e);
         const osDisplay = $('os-display');
-        if (osDisplay) osDisplay.textContent = 'Error loading tools';
+        if (osDisplay) osDisplay.textContent = 'Error: ' + e.message;
     }
 }
 
@@ -492,6 +509,12 @@ function togglePanel(tool) {
     $(`panel-${tool}`).classList.toggle('collapsed');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadTools();
-});
+function initializeTools() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadTools);
+    } else {
+        loadTools();
+    }
+}
+
+initializeTools();
