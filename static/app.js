@@ -26,13 +26,27 @@ function addSetupLog(message, isDone = false) {
     const logsContainer = $('setupLogs');
     if (!logsContainer) return;
 
-    const logItem = document.createElement('div');
-    logItem.className = 'setup-log-item' + (isDone ? ' done' : '');
-    logItem.innerHTML = `
-        ${!isDone ? '<div class="setup-log-spinner"></div>' : ''}
-        <span>${message}</span>
-    `;
-    logsContainer.appendChild(logItem);
+    // Cari log item terakhir yang belum done
+    let logItem = logsContainer.querySelector('.setup-log-item:not(.done)');
+
+    if (isDone && logItem) {
+        // Update existing log item ke done
+        logItem.classList.add('done');
+        const spinner = logItem.querySelector('.setup-log-spinner');
+        if (spinner) spinner.remove();
+        const span = logItem.querySelector('span');
+        if (span) span.textContent = message;
+    } else if (!isDone) {
+        // Create new log item yang masih loading
+        logItem = document.createElement('div');
+        logItem.className = 'setup-log-item';
+        logItem.innerHTML = `
+            <div class="setup-log-spinner"></div>
+            <span>${message}</span>
+        `;
+        logsContainer.appendChild(logItem);
+    }
+
     logsContainer.scrollTop = logsContainer.scrollHeight;
 }
 
@@ -66,7 +80,10 @@ function showSetupTools() {
                 const btn = document.createElement('button');
                 btn.className = 'setup-install-btn';
                 btn.textContent = `Install ${info.name}`;
-                btn.onclick = () => installTool(id, btn);
+                btn.onclick = () => {
+                    CURRENT_INSTALL_ID = id;
+                    showPasswordModal(id);
+                };
                 installButtons.appendChild(btn);
             });
         }
@@ -75,6 +92,13 @@ function showSetupTools() {
 
 async function loadTools() {
     console.log('[loadTools] Starting tool initialization...');
+
+    // Clear previous logs
+    const logsContainer = $('setupLogs');
+    if (logsContainer) {
+        logsContainer.innerHTML = '<div class="setup-log-item"><div class="setup-log-spinner"></div><span>Initializing engine...</span></div>';
+    }
+
     addSetupLog('Fetching environment information...');
 
     try {
@@ -166,66 +190,87 @@ function completeSetup() {
 }
 
 async function installTool(id, btn, password = null) {
-    if (!btn) btn = document.querySelector(`.install-btn[data-id="${id}"]`);
-    const originalText = btn ? btn.textContent : 'Install';
-    if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'Installing...';
-    }
-    
+    console.log('[installTool] Installing tool:', id);
+
     try {
-        const res = await fetch(`/install-tool/${id}`, { 
+        const res = await fetch(`/install-tool/${id}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password })
+            body: JSON.stringify({ password: password || null })
         });
         const data = await res.json();
-        
+
         if (data.status === 'success') {
-            logTerminal(`<b style="color:var(--green)">Tool ${id} installed successfully.</b>`);
+            console.log('[installTool] Installation successful');
+            const msg = `Tool ${id} installed successfully!`;
+            alert(msg);
+            logTerminal(`<b style="color:var(--green)">${msg}</b>`);
             closePasswordModal();
-            loadTools(); 
-        } else if (data.code === 'SUDO_PASSWORD_REQUIRED' || data.code === 'INCORRECT_PASSWORD') {
-            if (data.code === 'INCORRECT_PASSWORD') alert('Incorrect password, please try again.');
+            // Reload tools to update setup card
+            await loadTools();
+        } else if (data.code === 'SUDO_PASSWORD_REQUIRED') {
+            console.log('[installTool] Password required');
+            closePasswordModal();
             CURRENT_INSTALL_ID = id;
-            showPasswordModal();
-            if (btn) {
-                btn.textContent = originalText;
-                btn.disabled = false;
+            showPasswordModal(id);
+        } else if (data.code === 'INCORRECT_PASSWORD') {
+            console.log('[installTool] Incorrect password');
+            alert('Incorrect password, please try again.');
+            // Show password modal again for retry
+            const pwInput = $('sudoPassword');
+            if (pwInput) {
+                pwInput.value = '';
+                pwInput.focus();
             }
         } else {
-            alert(data.detail || 'Installation failed');
-            if (btn) {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
+            console.error('[installTool] Installation failed:', data);
+            alert(data.detail || 'Installation failed. Please try again.');
         }
     } catch (e) {
-        alert(e.message);
-        if (btn) {
-            btn.textContent = originalText;
-            btn.disabled = false;
-        }
+        console.error('[installTool] Error:', e);
+        alert('Error: ' + e.message);
     }
 }
 
-function showPasswordModal() {
-    $('passwordModal').style.display = 'flex';
-    $('sudoPassword').value = '';
-    $('sudoPassword').focus();
+function showPasswordModal(toolId) {
+    const modal = $('passwordModal');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+    const pwInput = $('sudoPassword');
+    if (pwInput) {
+        pwInput.value = '';
+        pwInput.focus();
+    }
+
+    // Store which tool is being installed
+    CURRENT_INSTALL_ID = toolId || CURRENT_INSTALL_ID;
 }
 
 function closePasswordModal() {
-    $('passwordModal').style.display = 'none';
+    const modal = $('passwordModal');
+    if (modal) modal.style.display = 'none';
+    const pwInput = $('sudoPassword');
+    if (pwInput) pwInput.value = '';
 }
 
 function setupEventHandlers() {
     const confirmBtn = $('confirmSudoBtn');
     if (confirmBtn) {
-        confirmBtn.onclick = () => {
+        confirmBtn.onclick = async () => {
             const pw = $('sudoPassword').value;
             if (!pw) return alert('Password required');
-            installTool(CURRENT_INSTALL_ID, null, pw);
+
+            confirmBtn.disabled = true;
+            const originalText = confirmBtn.textContent;
+            confirmBtn.textContent = 'Installing...';
+
+            try {
+                await installTool(CURRENT_INSTALL_ID, confirmBtn, pw);
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = originalText;
+            }
         };
     }
 
@@ -234,7 +279,7 @@ function setupEventHandlers() {
         pwInput.onkeyup = e => {
             if (e.key === 'Enter') {
                 const btn = $('confirmSudoBtn');
-                if (btn) btn.click();
+                if (btn && !btn.disabled) btn.click();
             }
         };
     }
