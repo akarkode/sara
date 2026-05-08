@@ -61,9 +61,24 @@ DEFAULT_TOOLS = ["httpx", "ffuf", "whatweb", "wafw00f"]
 _lock   = asyncio.Lock()
 _queues: dict[str, list[asyncio.Queue]] = {}
 _procs:  dict[str, asyncio.subprocess.Process] = {}
+_tasks:  dict[str, asyncio.Task] = {}
 
 def get_tools_info() -> dict:
     return TOOLS_INFO
+
+async def stop_scan(scan_id: str):
+    if scan_id in _tasks:
+        _tasks[scan_id].cancel()
+        # Also kill subprocess if running
+        if scan_id in _procs:
+            try:
+                _procs[scan_id].kill()
+            except Exception:
+                pass
+        await update_scan_status(scan_id, "cancelled")
+        await _broadcast(scan_id, {"type": "status", "status": "cancelled"})
+        return True
+    return False
 
 def resolve_tools(selected: list[str]) -> list[str]:
     resolved = set(selected)
@@ -239,17 +254,21 @@ def _parse_nmap(line: str) -> tuple[str, dict]:
     return line, {}
 
 async def run_scan(scan_id: str, domain: str, selected_tools: list[str], wordlist: str = "default"):
+    # Register this task
+    _tasks[scan_id] = asyncio.current_task()
+    
     async with _lock:
-        await update_scan_status(scan_id, "running")
-        await _broadcast(scan_id, {"type": "status", "status": "running"})
-        plan = resolve_tools(selected_tools)
-        await _broadcast(scan_id, {"type": "plan", "tools": plan, "tools_info": {t: TOOLS_INFO[t] for t in plan}})
-        t0 = time.time()
-        def time_left() -> float:
-            return max(60.0, TIMEOUT - (time.time() - t0))
-        wl  = WORDLIST if wordlist == "default" else wordlist
-        ctx = {"domain": domain, "subdomains": [], "live_hosts": [], "sub_file": None}
         try:
+            await update_scan_status(scan_id, "running")
+            await _broadcast(scan_id, {"type": "status", "status": "running"})
+            plan = resolve_tools(selected_tools)
+            await _broadcast(scan_id, {"type": "plan", "tools": plan, "tools_info": {t: TOOLS_INFO[t] for t in plan}})
+            t0 = time.time()
+            def time_left() -> float:
+                return max(60.0, TIMEOUT - (time.time() - t0))
+            wl  = WORDLIST if wordlist == "default" else wordlist
+            ctx = {"domain": domain, "subdomains": [], "live_hosts": [], "sub_file": None}
+            
             for tool in plan:
                 if tool == "httpx":
                     await _broadcast(scan_id, {"type": "step_start", "tool": "httpx"})
@@ -262,7 +281,7 @@ async def run_scan(scan_id: str, domain: str, selected_tools: list[str], wordlis
                     if not subs:
                         await _broadcast(scan_id, {"type": "step_done", "tool": "httpx", "count": 0})
                         continue
-                    sub_file = os.path.join(os.environ.get("TEMP", "/tmp"), f"argus_{scan_id}_subs.txt")
+                    sub_file = os.path.join(os.environ.get("TEMP", "/tmp") if os.name == 'nt' else "/tmp", f"argus_{scan_id}_subs.txt")
                     with open(sub_file, "w") as f:
                         f.write("\n".join(subs))
                     ctx["sub_file"] = sub_file
@@ -304,20 +323,35 @@ async def run_scan(scan_id: str, domain: str, selected_tools: list[str], wordlis
                     await _run_tool(scan_id, "dig", ["dig", domain, "ANY", "+noall", "+answer"], timeout=time_left(), parser=_parse_dig)
                 elif tool == "nmap":
                     await _run_tool(scan_id, "nmap", ["nmap", "-sV", "--top-ports", "100", "-T4", "--open", domain], timeout=time_left(), parser=_parse_nmap)
+            
             if ctx.get("sub_file") and os.path.exists(ctx["sub_file"]):
-                try:
-                    os.remove(ctx["sub_file"])
-                except OSError:
-                    pass
+                try: os.remove(ctx["sub_file"])
+                except OSError: pass
+                
             await update_scan_status(scan_id, "completed")
             await _broadcast(scan_id, {"type": "status", "status": "completed"})
+            
         except asyncio.CancelledError:
-            await update_scan_status(scan_id, "error")
-            await _broadcast(scan_id, {"type": "status", "status": "error"})
+            # Clean up subprocess if cancelled from here too
+            if scan_id in _procs:
+                try: _procs[scan_id].kill()
+                except: pass
+            await update_scan_status(scan_id, "cancelled")
+            await _broadcast(scan_id, {"type": "status", "status": "cancelled"})
+            raise # Re-raise to ensure proper task completion
         except Exception as exc:
             ev = await insert_result(scan_id, "system", f"Error: {exc}")
             await _broadcast(scan_id, {"type": "line", **ev})
             await update_scan_status(scan_id, "error")
             await _broadcast(scan_id, {"type": "status", "status": "error"})
         finally:
+            # Cleanup custom wordlist if it was an uploaded file
+            if wordlist and wordlist.startswith(os.path.join("wordlists", "uploads")):
+                try:
+                    if os.path.exists(wordlist):
+                        os.remove(wordlist)
+                except OSError:
+                    pass
+                    
+            _tasks.pop(scan_id, None)
             await _broadcast(scan_id, {"type": "done"})

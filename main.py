@@ -4,7 +4,7 @@ import os
 import uuid
 from contextlib import asynccontextmanager
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Request, Query
+from fastapi import FastAPI, HTTPException, Request, Query, UploadFile, File
 from fastapi.responses import StreamingResponse, Response, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from db import init_db, create_scan, get_scan, get_scan_results, get_all_scans
 from scanner import (
     validate_domain, run_scan, subscribe, unsubscribe,
-    get_tools_info, resolve_tools, DEFAULT_TOOLS,
+    get_tools_info, resolve_tools, DEFAULT_TOOLS, stop_scan
 )
 from exporter import export_pdf, export_csv
 
@@ -49,6 +49,13 @@ async def start_scan(req: ScanRequest):
     await create_scan(scan_id, domain, resolved, req.wordlist)
     asyncio.create_task(run_scan(scan_id, domain, selected, req.wordlist))
     return {"scan_id": scan_id, "domain": domain, "status": "queued", "tools": resolved}
+
+@app.post("/scan/{scan_id}/stop")
+async def stop_scan_route(scan_id: str):
+    success = await stop_scan(scan_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Scan not found or not running")
+    return {"status": "cancelled", "scan_id": scan_id}
 
 @app.get("/scan/{scan_id}/stream")
 async def scan_stream(scan_id: str, request: Request):
@@ -126,6 +133,25 @@ async def scan_export_csv(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=argus_{scan_id}.csv"},
     )
+
+@app.post("/upload-wordlist")
+async def upload_wordlist(file: UploadFile = File(...)):
+    if not file.filename.endswith(".txt"):
+        raise HTTPException(status_code=400, detail="Only .txt files are allowed")
+    
+    upload_dir = os.path.join("wordlists", "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    file_id = uuid.uuid4().hex[:8]
+    file_path = os.path.join(upload_dir, f"custom_{file_id}.txt")
+    
+    try:
+        content = await file.read()
+        with open(file_path, "wb") as f:
+            f.write(content)
+        return {"path": file_path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
 
 @app.get("/scans")
 async def list_scans(limit: int = 50, offset: int = 0):

@@ -48,7 +48,7 @@ async def create_scan(scan_id: str, domain: str, tools: list[str], wordlist: str
 
 async def update_scan_status(scan_id: str, status: str):
     async with aiosqlite.connect(DB_PATH) as db:
-        if status in ("completed", "error", "timeout"):
+        if status in ("completed", "error", "timeout", "cancelled"):
             await db.execute("UPDATE scans SET status = ?, finished_at = ? WHERE id = ?", (status, time.time(), scan_id))
         else:
             await db.execute("UPDATE scans SET status = ? WHERE id = ?", (status, scan_id))
