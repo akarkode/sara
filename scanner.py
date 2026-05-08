@@ -8,6 +8,7 @@ import shutil
 import subprocess
 from dotenv import load_dotenv
 from db import insert_result, update_scan_status
+from vuln_react2shell import run_as_argus_tool as _run_react2shell
 
 load_dotenv()
 
@@ -64,6 +65,14 @@ TOOLS_INFO = {
         "order": 7,
         "binary": "nmap",
     },
+    "react2shell": {
+        "name": "React2Shell",
+        "description": "CVE-2025-55182 — React Server Components RCE detection",
+        "depends": ["httpx"],
+        "order": 8,
+        "binary": None,
+        "python": True,
+    },
 }
 
 DEFAULT_TOOLS = ["httpx", "ffuf", "whatweb", "wafw00f"]
@@ -93,9 +102,10 @@ def get_os_info():
     return info
 
 def is_tool_available(tool_id: str) -> bool:
-    binary = TOOLS_INFO.get(tool_id, {}).get("binary")
-    if not binary:
-        return False
+    tool = TOOLS_INFO.get(tool_id, {})
+    binary = tool.get("binary")
+    if binary is None:
+        return tool.get("python", False)
     return shutil.which(binary) is not None
 
 def get_tools_info() -> dict:
@@ -449,6 +459,19 @@ async def run_scan(scan_id: str, domain: str, selected_tools: list[str], wordlis
                     await _run_tool(scan_id, "dig", ["dig", domain, "ANY", "+noall", "+answer"], timeout=time_left(), parser=_parse_dig)
                 elif tool == "nmap":
                     await _run_tool(scan_id, "nmap", ["nmap", "-sV", "--top-ports", "100", "-T4", "--open", domain], timeout=time_left(), parser=_parse_nmap)
+                elif tool == "react2shell":
+                    hosts = ctx.get("live_hosts", [])
+                    if not hosts:
+                        await _broadcast(scan_id, {"type": "step_skip", "tool": "react2shell"})
+                        continue
+                    await _broadcast(scan_id, {"type": "step_start", "tool": "react2shell"})
+                    ev = await insert_result(scan_id, "system", f"Scanning {len(hosts)} live hosts for {TOOLS_INFO['react2shell']['description']}...")
+                    await _broadcast(scan_id, {"type": "line", **ev})
+                    results = await _run_react2shell(scan_id, hosts, insert_result, _broadcast)
+                    vuln_count = sum(1 for r in results if r.status in ("VULNERABLE", "EXPOSED"))
+                    ev = await insert_result(scan_id, "system", f"react2shell finished — {vuln_count}/{len(results)} potentially vulnerable", {"summary": True, "count": vuln_count})
+                    await _broadcast(scan_id, {"type": "line", **ev})
+                    await _broadcast(scan_id, {"type": "step_done", "tool": "react2shell", "count": vuln_count})
             
             if ctx.get("sub_file") and os.path.exists(ctx["sub_file"]):
                 try: os.remove(ctx["sub_file"])
